@@ -14,7 +14,7 @@ export async function createFolderAction(formData) {
     const parentId = formData.get("parentId") || null;
     if (name) {
         await mysql_createFolder(name, parentId);
-        revalidatePath("/dashboard/documents");
+        revalidatePath("/documents");
     }
 }
 
@@ -35,7 +35,7 @@ export async function uploadFileAction(formData) {
         await mysql_addFileRecord(filename, url, mimeType, folderId);
 
         // 3. Refresh UI
-        revalidatePath("/dashboard/documents");
+        revalidatePath("/documents");
         return { success: true, url: url, name: filename };
     } catch (error) {
         console.error("Upload Error:", error);
@@ -70,7 +70,7 @@ export async function deleteFileAction(formData) {
 
         // 3. Delete from DB
         await mysql_deleteFile(internalid);
-        revalidatePath("/dashboard/documents");
+        revalidatePath("/documents");
     }
 }
 
@@ -78,6 +78,6 @@ export async function deleteFolderAction(formData) {
     const internalid = formData.get("internalid");
     if (internalid) {
         await mysql_deleteFolder(internalid);
-        revalidatePath("/dashboard/documents");
+        revalidatePath("/documents");
     }
 }

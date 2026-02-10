@@ -16,7 +16,7 @@ export default async function CustomersPage() {
 
         {/* Primary Action - Amber to match Documents 'Upload' */}
         <Link 
-          href="/dashboard/customers/new"
+          href="/customers/new"
           className="flex items-center gap-2 bg-amber-700 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-medium shadow-md transition-all active:scale-95"
         >
           <Plus size={18} />
@@ -66,13 +66,13 @@ export default async function CustomersPage() {
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Link 
-                          href={`/dashboard/customers/${customer.internalid}`}
+                          href={`/customers/${customer.internalid}`}
                           className="text-xs font-bold text-stone-500 hover:text-[#eaddcf] px-3 py-1.5 rounded-md hover:bg-stone-700 transition-all"
                         >
                           View
                         </Link>
                         <Link 
-                          href={`/dashboard/customers/${customer.internalid}/edit`}
+                          href={`/customers/${customer.internalid}/edit`}
                           className="text-xs font-bold text-amber-600 hover:text-amber-500 px-3 py-1.5 rounded-md hover:bg-stone-700 transition-all"
                         >
                           Edit

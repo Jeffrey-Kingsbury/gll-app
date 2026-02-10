@@ -65,7 +65,7 @@ export async function saveEstimateAction(data) {
   console.log("Saving Estimate to DB:", data);
   // INSERT INTO estimates ...
   // INSERT INTO estimate_items ...
-  revalidatePath("/dashboard/estimates");
+  revalidatePath("/estimates");
   return { success: true, newId: Math.floor(Math.random() * 1000) };
 }
 

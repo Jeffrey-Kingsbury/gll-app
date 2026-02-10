@@ -11,7 +11,7 @@ export default function NewCustomerPage() {
     
     if (name) {
       await mysql_createCustomer(name);
-      redirect("/dashboard/customers");
+      redirect("/customers");
     }
   }
 
@@ -37,7 +37,7 @@ export default function NewCustomerPage() {
 
           <div className="flex justify-end gap-4 pt-4">
              <a 
-               href="/dashboard/customers"
+               href="/customers"
                className="px-6 py-2.5 text-sm font-medium text-secondary-600 hover:bg-secondary-100 rounded-lg transition-all duration-200"
              >
                Cancel

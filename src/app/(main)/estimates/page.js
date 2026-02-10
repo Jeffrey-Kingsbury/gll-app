@@ -12,13 +12,13 @@ export default async function EstimatesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex gap-2">
             <Link 
-            href="/dashboard/estimates/settings"
+            href="/estimates/settings"
             className="flex items-center gap-2 bg-white border border-stone-200 text-stone-600 hover:bg-stone-50 px-4 py-2.5 rounded-xl font-medium shadow-sm transition-all"
             >
             Templates
             </Link>
             <Link 
-            href="/dashboard/estimates/new"
+            href="/estimates/new"
             className="flex items-center gap-2 bg-amber-700 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-medium shadow-md transition-all active:scale-95"
             >
             <Plus size={18} />

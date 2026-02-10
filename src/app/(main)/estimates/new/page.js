@@ -125,7 +125,7 @@ export default function NewEstimatePage() {
         const result = await saveEstimateAction(payload);
         if (result.success) {
             localStorage.removeItem(LOCAL_STORAGE_KEY);
-            router.push("/dashboard/estimates");
+            router.push("/estimates");
         }
     };
 
