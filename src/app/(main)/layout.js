@@ -135,8 +135,11 @@ export default function DashboardLayout({ children }) {
       {/* MOBILE HEADER (< lg) */}
       <div className="lg:hidden fixed top-0 w-full bg-stone-900 text-[#eaddcf] z-50 px-4 py-3 flex items-center justify-between shadow-md">
         <span className="font-bold text-xl tracking-tight flex items-center gap-2">
-          <Hammer size={18} /> Wyatt
-        </span>
+                <img 
+                src="/system/wyatt_logo.svg" 
+                alt="Logo " 
+                className="w-auto object-contain h-12"
+              />        </span>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-[#eaddcf]">
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -154,7 +157,7 @@ export default function DashboardLayout({ children }) {
                 <img 
                 src="/system/wyatt_logo.svg" 
                 alt="Logo " 
-                className="w-auto object-contain h-full px-6"
+                className="w-auto object-contain h-12 px-6"
               />
           </div>
         </div>
