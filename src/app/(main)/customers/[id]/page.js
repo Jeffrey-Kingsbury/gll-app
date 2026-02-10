@@ -1,5 +1,5 @@
 import { mysql_getCustomerById, mysql_getAllImages } from "../../../../context/mysqlConnection";
-import CustomerClient from "./CustomerClient.js";
+import CustomerClient from "./CustomerClient.js.js";
 import { notFound } from "next/navigation";
 
 export default async function CustomerPage({ params }) {
