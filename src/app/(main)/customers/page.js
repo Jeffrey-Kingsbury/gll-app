@@ -3,10 +3,13 @@ import { mysql_getCustomers } from "../../../context/mysqlConnection";
 import Link from "next/link";
 import { Plus, Search, Filter, Users, MoreHorizontal } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 // This is a Server Component by default
 export default async function CustomersPage() {
   // Fetch data directly from MySQL
   const customers = await mysql_getCustomers();
+  console.log("Fetched customers:", customers); // Debug log to verify data fetching
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">

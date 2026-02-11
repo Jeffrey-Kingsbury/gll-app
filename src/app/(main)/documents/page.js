@@ -2,7 +2,7 @@
 import { mysql_getAllFolders, mysql_getAllFiles } from "../../../context/mysqlConnection";
 import DocumentsClient from "./DocumentsClient";
 
-export const dynamic = 'force-dynamic'; // Ensure this page doesn't cache statically
+export const dynamic = 'force-dynamic';
 
 export default async function DocumentsPage() {
     // Parallel data fetching for speed

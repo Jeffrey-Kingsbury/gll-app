@@ -15,7 +15,10 @@ export const translations = {
     subtitle: "Sign in to access your dashboard",
     googleLogin: "Continue with Google",
     verifying: "Verifying...",
-    footer: "By signing in, you agree to our Terms of Service.",
+    footer: "By signing in, you agree to our",
+    tos: "Terms of Service",
+    tosAnd: "and",
+    privacy: "Privacy Policy",
     copyright: "© 2025 Wyatt Inc."
   },
   fr: {
@@ -32,7 +35,10 @@ export const translations = {
     subtitle: "Connectez-vous pour accéder au tableau de bord",
     googleLogin: "Continuer avec Google",
     verifying: "Vérification...",
-    footer: "En vous connectant, vous acceptez nos conditions d'utilisation.",
-    copyright: "© 2025 Wyatt Inc."
+    footer: "En vous connectant, vous acceptez nos",
+    copyright: "© 2025 Wyatt Inc.",
+    tos: "Conditions d'utilisation",
+    tosAnd: "et",
+    privacy: "Politique de confidentialité"
   }
 };

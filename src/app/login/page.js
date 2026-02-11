@@ -1,33 +1,220 @@
 // app/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation"; 
 import { useSettings } from "../../context/SettingsContext";
 import { translations } from "../../context/translations";
-
-// Firebase & Auth
 import { auth, googleProvider, signInWithPopup } from "../../lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { mysql_getUserByGoogleId } from "../../context/mysqlConnection";
+import { CheckCircle2, Globe } from "lucide-react";
 
-// Backend Logic
-import { queryMySQL, mysql_getUserByGoogleId } from "../../context/mysqlConnection";
+// --- UPDATED: FULL-SCREEN TRIANGULAR MESH COMPONENT ---
+const TriangleMeshCanvas = ({ variant = "desktop" }) => {
+  const canvasRef = useRef(null);
+  const mouseRef = useRef({ x: -1000, y: -1000 });
+  const isHoveringRef = useRef(false);
+  const particlesRef = useRef([]);
 
-// Icons & UI
-import { CheckCircle2, Globe, LayoutDashboard, Hammer } from "lucide-react";
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let animationFrameId;
+    let time = 0;
+    
+    // Smooth Transition Variable (0 = No Hover, 1 = Full Hover)
+    let currentHoverStrength = 0;
+
+    // --- Configuration ---
+    const isMobile = variant === "mobile";
+
+    const config = {
+      particleGap: isMobile ? 70 : 100, // Slightly denser on mobile
+      connectionDistance: isMobile ? 110 : 160,
+      interactionRadius: 300,
+      baseSpeed: 0.002,
+      // Stone-500 is approx #78716c (120, 113, 108)
+      baseColor: isMobile ? "rgba(175, 169, 165, 0.4)" : "rgba(87, 83, 78, 0.15)", 
+      strokeColorMobile: "rgba(120, 113, 108, 0.4)" 
+    };
+
+    const initParticles = () => {
+        particlesRef.current = [];
+        const cols = Math.ceil(canvas.width / config.particleGap) + 2;
+        const rows = Math.ceil(canvas.height / config.particleGap) + 2;
+
+        for (let i = -1; i < cols; i++) {
+            for (let j = -1; j < rows; j++) {
+                particlesRef.current.push({
+                    baseX: i * config.particleGap + (Math.random() * 20),
+                    baseY: j * config.particleGap + (Math.random() * 20),
+                    x: 0, y: 0,
+                    phaseX: Math.random() * Math.PI * 2,
+                    phaseY: Math.random() * Math.PI * 2,
+                    speedX: (Math.random() * 0.5 + 0.5) * config.baseSpeed,
+                    speedY: (Math.random() * 0.5 + 0.5) * config.baseSpeed,
+                });
+            }
+        }
+    };
+
+    const resize = () => {
+      if (canvas.parentElement) {
+        canvas.width = canvas.parentElement.offsetWidth;
+        canvas.height = canvas.parentElement.offsetHeight;
+        initParticles();
+      }
+    };
+    window.addEventListener("resize", resize);
+    resize();
+
+    // --- Mouse Handlers (DESKTOP ONLY) ---
+    const handleMouseMove = (e) => {
+        if (isMobile) return; // Disable interaction on mobile
+        
+        const rect = canvas.getBoundingClientRect();
+        const isOver = e.clientX >= rect.left && e.clientX <= rect.right && 
+                       e.clientY >= rect.top && e.clientY <= rect.bottom;
+        
+        isHoveringRef.current = isOver;
+        if (isOver) {
+            mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        }
+    };
+
+    // Only attach listener if desktop
+    if (!isMobile) {
+        window.addEventListener("mousemove", handleMouseMove);
+    }
+
+    // --- Animation Loop ---
+    const render = () => {
+      // PERFORMANCE: If canvas is hidden via CSS (e.g. hidden lg:block), stop rendering
+      if (canvas.offsetParent === null) {
+          animationFrameId = requestAnimationFrame(render);
+          return;
+      }
+
+      time += 1.5;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const mx = mouseRef.current.x;
+      const my = mouseRef.current.y;
+
+      // Interaction Strength Logic (Desktop Only)
+      if (!isMobile) {
+          const targetStrength = isHoveringRef.current ? 1 : 0;
+          currentHoverStrength += (targetStrength - currentHoverStrength) * 0.1;
+          if (currentHoverStrength < 0.001) currentHoverStrength = 0;
+      }
+
+      // --- A. Update Particle Positions ---
+      particlesRef.current.forEach(p => {
+          let targetX = p.baseX + Math.sin(time * p.speedX + p.phaseX) * 20;
+          let targetY = p.baseY + Math.cos(time * p.speedY + p.phaseY) * 20;
+
+          // Apply Repulsion ONLY on Desktop & if Hovering
+          if (!isMobile && currentHoverStrength > 0) {
+             const dx = mx - targetX;
+             const dy = my - targetY;
+             const dist = Math.sqrt(dx*dx + dy*dy);
+             
+             if(dist < config.interactionRadius) {
+                 const repulsion = (1 - dist/config.interactionRadius) * 30 * currentHoverStrength;
+                 targetX -= (dx/dist) * repulsion;
+                 targetY -= (dy/dist) * repulsion;
+             }
+          }
+          p.x = targetX;
+          p.y = targetY;
+      });
+
+      // --- B. Draw Connections ---
+      for (let i = 0; i < particlesRef.current.length; i++) {
+          const p1 = particlesRef.current[i];
+          
+          for (let j = i + 1; j < particlesRef.current.length; j++) {
+              const p2 = particlesRef.current[j];
+              const dx = p1.x - p2.x;
+              const dy = p1.y - p2.y;
+              const dist = Math.sqrt(dx*dx + dy*dy);
+
+              if (dist < config.connectionDistance) {
+                  let strokeColor, lineWidth, shadowBlur;
+
+                  // --- Mobile Style (Simple Stone-500, No Math) ---
+                  if (isMobile) {
+                      const baseOpacity = 1 - (dist / config.connectionDistance);
+                      
+                      strokeColor = `rgba(120, 113, 108, ${baseOpacity * 1})`; // Stone-500
+                      lineWidth = 0.7;
+                      shadowBlur = 0;
+                  } 
+                  // --- Desktop Style (Amber Glow + Interaction) ---
+                  else {
+                      const midX = (p1.x + p2.x) / 2;
+                      const midY = (p1.y + p2.y) / 2;
+                      const mouseDist = Math.sqrt((mx - midX)**2 + (my - midY)**2);
+
+                      let glowIntensity = 0;
+                      if (mouseDist < config.interactionRadius) {
+                          glowIntensity = Math.pow(1 - (mouseDist / config.interactionRadius), 2);
+                      }
+                      const finalGlow = glowIntensity * currentHoverStrength;
+
+                      if (finalGlow > 0.01) {
+                          strokeColor = `hsla(35, 100%, 60%, ${0.1 + (finalGlow * 0.4)})`;
+                          lineWidth = 0.7 + (finalGlow * 1.5);
+                          shadowBlur = finalGlow * 20;
+                      } else {
+                          const baseOpacity = 1 - (dist / config.connectionDistance);
+                          strokeColor = `hsla(35, 100%, 60%, ${baseOpacity * 0.3 * (1-currentHoverStrength) + (baseOpacity * 0.1)})`; 
+                          // Use original subtle color
+                          strokeColor = `hsla(35, 100%, 60%, ${baseOpacity * .8})`;
+                          lineWidth = 0.5;
+                          shadowBlur = 0;
+                      }
+                  }
+
+                  ctx.beginPath();
+                  ctx.strokeStyle = strokeColor;
+                  ctx.lineWidth = lineWidth;
+                  ctx.shadowColor = !isMobile ? "rgba(245, 158, 11, 0.8)" : "transparent";
+                  ctx.shadowBlur = shadowBlur;
+                  ctx.moveTo(p1.x, p1.y);
+                  ctx.lineTo(p2.x, p2.y);
+                  ctx.stroke();
+              }
+          }
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      if (!isMobile) {
+          window.removeEventListener("mousemove", handleMouseMove);
+      }
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [variant]); // Re-run if variant changes
+
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
+};
 
 export default function LoginPage() {
-  // --- State & Hooks ---
   const { lang, setLang } = useSettings(); 
   const router = useRouter();
-  
-  // Select the correct language object from the external file
   const text = translations[lang] || translations.en;
 
   const [isLoading, setIsLoading] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
-  
-  // --- Logic: MySQL User Check ---
+
   async function checkUserInMySQL(googleId) {
     try {
       let existingUser = await mysql_getUserByGoogleId(googleId);
@@ -38,20 +225,17 @@ export default function LoginPage() {
     }
   }
 
-  // --- Logic: Auth State Listener ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setIsLoading(true);
         const exists = await checkUserInMySQL(currentUser.uid);
-        
         if (exists) {
           router.push("/");
         } else {
-          console.log("User does not exist in MySQL. Google ID: " + currentUser.uid);
           await signOut(auth);
           setIsLoading(false);
-          alert(lang === 'fr' ? "Utilisateur non trouvé. Contactez le support." : "User not found. Please contact support.");
+          alert(lang === 'fr' ? "Utilisateur non trouvé." : "User not found.");
         }
       } else {
         setAuthChecking(false);
@@ -61,7 +245,6 @@ export default function LoginPage() {
     return () => unsubscribe();
   }, [router, lang]);
 
-  // --- Logic: Handle Login Click ---
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
@@ -72,36 +255,39 @@ export default function LoginPage() {
     }
   };
 
-  // --- Render ---
   return (
-    <div className="min-h-screen flex w-full bg-[#fdfaf6] dark:bg-stone-950">
+    <div className="min-h-screen flex w-full relative bg-[#fdfaf6] dark:bg-stone-950">
       
-      {/* LEFT SIDE: Branding (Hidden on mobile) */}
-      <div className="hidden lg:flex w-1/2 bg-stone-900 relative overflow-hidden flex-col justify-between p-12 text-stone-100">
+      {/* --- MOBILE BACKGROUND (Stone-500, No Interaction) --- 
+          Shown on Mobile (block), Hidden on Desktop (lg:hidden) 
+      */}
+      <div className="absolute inset-0 block lg:hidden z-0 overflow-hidden pointer-events-auto bg-stone-950">
+         <TriangleMeshCanvas variant="mobile" />
+      </div>
+
+      {/* LEFT SIDE: Branding (Desktop) */}
+      <div className="hidden lg:flex w-1/2 bg-stone-900 relative overflow-hidden flex-col justify-between p-12 text-stone-100 z-10">
         
-        {/* Background Decor - Subtle, Structural, Warm */}
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=2670&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay sepia-[0.3]"></div>
+        {/* Background Layers */}
+        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=2670&auto=format&fit=crop')] bg-cover bg-center opacity-20 mix-blend-overlay sepia-[0.3] z-0"></div>
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-stone-900/95 to-stone-800/90 z-10"></div>
 
+        {/* --- DESKTOP BACKGROUND (Amber, Interactive) ---
+            Shown on Desktop, implicitly hidden on mobile due to parent container display 
+        */}
+        <div className="absolute inset-0 z-10 opacity-70 mix-blend-plus-lighter pointer-events-auto">
+            <TriangleMeshCanvas variant="desktop" />
+        </div>
+
         {/* Content Layer */}
-        <div className="relative z-20 flex flex-col h-full justify-center items-start gap-6">
+        <div className="relative z-20 flex flex-col h-full justify-between items-center gap-6 mt-6 select-none pointer-events-none"> 
           <div className="flex items-center gap-3 text-2xl font-bold tracking-tight text-[#eaddcf]">
-            {/* Logo Icon */}
-                <img 
-                src="/system/wyatt_logo.svg" 
-                alt="Logo " 
-                className="w-auto h-60 object-contain px-6"
-              />
+             <img src="/system/wyatt_logo.svg" alt="Logo" draggable="false" className="w-auto h-40 object-contain px-6 drop-shadow-2xl" />
           </div>
 
           <div className="space-y-6 max-w-lg">
-            <h1 className="text-4xl font-bold leading-tight text-white">
-              {text.slogan}
-            </h1>
-            <p className="text-[#d6cbbd] text-lg font-light leading-relaxed">
-              {text.subSlogan}
-            </p>
-            
+            <h1 className="text-4xl font-bold leading-tight text-white drop-shadow-lg">{text.slogan}</h1>
+            <p className="text-[#d6cbbd] text-lg font-light leading-relaxed drop-shadow-md">{text.subSlogan}</p>
             <div className="space-y-4 pt-4">
               <FeatureItem text={text.feature1} />
               <FeatureItem text={text.feature2} />
@@ -109,7 +295,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="flex justify-between items-end text-sm text-stone-500 font-medium">
+          <div className="flex justify-between items-end text-sm text-stone-500 font-medium w-full">
             <span>{text.copyright}</span>
             <span>v1.0.0</span>
           </div>
@@ -117,49 +303,26 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT SIDE: Login Logic */}
-      <div className="w-full lg:w-1/2 flex flex-col relative bg-[#fdfaf6] dark:bg-stone-950 transition-colors">
+      {/* Mobile: bg-transparent (so mesh shows). Desktop: Opaque bg-[#fdfaf6] */}
+      <div className="w-full lg:w-1/2 flex flex-col relative bg-transparent lg:bg-[#fdfaf6] dark:lg:bg-stone-950 transition-colors z-10">
         
-        {/* Language Toggle */}
         <div className="absolute top-6 right-6 z-30">
-          <button
-            onClick={() => setLang(lang === "en" ? "fr" : "en")}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-full text-xs font-bold tracking-wide transition-all border border-stone-200 dark:border-stone-800 shadow-sm"
-          >
-            <Globe size={14} />
-            {lang === "en" ? "EN" : "FR"}
+          <button onClick={() => setLang(lang === "en" ? "fr" : "en")} className="flex items-center gap-2 px-4 py-2 bg-white/80 lg:bg-white dark:bg-stone-900/80 dark:lg:bg-stone-900 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-full text-xs font-bold tracking-wide transition-all border border-stone-200 dark:border-stone-800 shadow-sm backdrop-blur-sm">
+            <Globe size={14} /> {lang === "en" ? "EN" : "FR"}
           </button>
         </div>
 
-        {/* Main Content */}
         <div className="flex-1 flex items-center justify-center p-8">
           <div className="w-full max-w-sm space-y-8">
-            
-            {/* Mobile Logo */}
             <div className="lg:hidden flex justify-center mb-8">
-               <img 
-                src="/system/wyatt_logo.svg" 
-                alt="Logo " 
-                className="w-auto h-60 object-contain px-6"
-              />
+               <img src="/system/wyatt_logo.svg" draggable='false' alt="Logo" className="w-auto h-60 object-contain px-6 drop-shadow-xl" />
             </div>
-
             <div className="text-center">
-              <h2 className="text-3xl font-bold text-stone-900 dark:text-[#eaddcf] tracking-tight font-serif ">
-                {process.env.NEXT_PUBLIC_COMPANY_NAME || ""}
-              </h2>
-              <p className="mt-3 text-stone-500 dark:text-stone-400">
-                {text.subtitle}
-              </p>
+              <h2 className="text-3xl font-bold text-stone-100 lg:text-stone-900 dark:text-[#eaddcf] tracking-tight font-serif ">{process.env.NEXT_PUBLIC_COMPANY_NAME || ""}</h2>
+              <p className="mt-3 text-stone-300 lg:text-stone-600 dark:text-stone-400 font-medium">{text.subtitle}</p>
             </div>
-
-            {/* Login Box */}
             <div className="mt-8 space-y-4">
-              
-              <button
-                onClick={handleGoogleLogin}
-                disabled={isLoading || authChecking}
-                className="group relative w-full flex items-center justify-center gap-3 bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-200 font-medium py-4 px-4 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
-              >
+              <button onClick={handleGoogleLogin} disabled={isLoading || authChecking} className="group relative w-full flex items-center justify-center gap-3 bg-white/90 lg:bg-white dark:bg-stone-900/90 dark:lg:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-200 font-medium py-4 px-4 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed backdrop-blur-sm">
                 {isLoading || authChecking ? (
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 border-2 border-stone-300 border-t-amber-600 rounded-full animate-spin"></div>
@@ -167,22 +330,12 @@ export default function LoginPage() {
                   </div>
                 ) : (
                   <>
-                    <img 
-                      src="https://www.svgrepo.com/show/475656/google-color.svg" 
-                      alt="Google" 
-                      className="w-5 h-5 group-hover:scale-110 transition-transform" 
-                    />
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     <span>{text.googleLogin}</span>
                   </>
                 )}
               </button>
-
-              <div className="text-center">
-                <p className="text-xs text-stone-400 mt-6">
-                  {text.footer}
-                </p>
-              </div>
-
+              <div className="text-center"><p className="text-xs text-stone-400 mt-6">{text.footer} <a href="/tos" className="underline text-amber-600">{text.tos}</a> {text.tosAnd} <a href="/privacy" className="underline text-amber-600">{text.privacy}</a>.</p></div>
             </div>
           </div>
         </div>
@@ -191,15 +344,13 @@ export default function LoginPage() {
   );
 }
 
-// --- Helper Component ---
 function FeatureItem({ text }) {
   return (
     <div className="flex items-center gap-3">
-      {/* Checkmark in Amber/Stone accent */}
-      <div className="bg-amber-500/10 p-1 rounded-full">
+      <div className="bg-amber-500/10 p-1 rounded-full border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
         <CheckCircle2 size={16} className="text-amber-500" />
       </div>
-      <span className="font-medium text-stone-200">{text}</span>
+      <span className="font-medium text-stone-200 drop-shadow-sm">{text}</span>
     </div>
   );
 }

@@ -1,0 +1,49 @@
+services:
+  # --- 1. The Next.js Application ---
+  app:
+    container_name: gll_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Database Connection (Notice host is 'db', not 'localhost')
+      - DB_HOST=db
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DB_NAME=${DB_NAME}
+      # Firebase / System Config
+      - COMPANY_NAME=${NEXT_PUBLIC_COMPANY_NAME}
+      - FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY}
+      - FIREBASE_AUTH_DOMAIN=${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
+      - FIREBASE_PROJECT_ID=${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
+      - FIREBASE_STORAGE_BUCKET=${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}
+      - FIREBASE_MESSAGING_SENDER_ID=${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}
+      - FIREBASE_APP_ID=${NEXT_PUBLIC_FIREBASE_APP_ID}
+      # Add other ENV vars here if needed
+    volumes:
+      # Persist uploads so they don't vanish when container restarts
+      - ./public/uploads:/app/public/uploads
+    depends_on:
+      - db
+
+  # --- 2. The MySQL Database ---
+  db:
+    container_name: gll_db
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+    ports:
+      - "3306:3306" # Optional: Expose 3306 if you want to connect via Workbench
+    volumes:
+      # Persist database data
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

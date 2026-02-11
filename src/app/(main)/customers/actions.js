@@ -11,7 +11,7 @@ export async function updateCustomerAction(formData) {
     try {
         await mysql_updateCustomer(id, name);
         // Refresh the data on the page so the user sees the update immediately
-        revalidatePath(`/customers/${id}`);
+        revalidatePath(`/customers`);
         return { success: true };
     } catch (error) {
         return { error: "Failed to update customer" };
