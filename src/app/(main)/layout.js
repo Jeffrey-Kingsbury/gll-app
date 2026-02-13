@@ -1,270 +1,200 @@
-// app/dashboard/layout.js
+// app/(main)/layout.js
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "../../lib/firebase"; 
-import { useSettings } from "../../context/SettingsContext";
-import { 
-  LayoutDashboard, 
-  FolderKanban, 
-  Calculator, 
-  FileText, 
-  Clock, 
-  LogOut, 
-  Menu, 
-  X,
+import {
+  LayoutDashboard,
   Users,
-  FolderOpen,
-  Hammer,
-  Globe,
-  Settings
+  FileText,
+  Folder,
+  Calculator,
+  LogOut,
+  ChevronLeft,
+  Palette,
+  Type,
+  FileInput,
+  ShieldCheck,
+  Sliders,
+  Menu,
+  X,
+  Database,
+  Building2, // Icon for Company Setup
+  UserCheck  // Icon for Employees
 } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "../../lib/firebase";
+import { useSettings } from "../../context/SettingsContext";
 
-export default function DashboardLayout({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const router = useRouter();
+export default function MainLayout({ children }) {
   const pathname = usePathname();
-  const { t, lang, setLang } = useSettings();
+  const router = useRouter();
+  const { darkMode } = useSettings();
 
-  // --- 1. CONFIGURATION ---
-  // We define the metadata for every major section here.
-  const navItems = [
-    { 
-      href: "/", 
-      exact: true, // Only match exactly "/dashboard"
-      label: t.dashboard || "Dashboard", 
-      subtitle: "Overview of your business performance",
-      icon: <LayoutDashboard size={20} /> 
-    },
-    { 
-      href: "/customers", 
-      label: t.customers || "Customers", 
-      subtitle: "Manage your client database & contacts",
-      icon: <Users size={20} /> 
-    },
-    { 
-      href: "/documents", 
-      label: t.documents || "Documents", 
-      subtitle: "Project files, blueprints, and assets",
-      icon: <FolderOpen size={20} /> 
-    },
-    { 
-      href: "/projects", 
-      label: t.projects || "Projects", 
-      subtitle: "Track active jobs and timelines",
-      icon: <FolderKanban size={20} /> 
-    },
-    { 
-      href: "/estimates", 
-      label: t.estimates || "Estimates", 
-      subtitle: "Create and send project bids",
-      icon: <Calculator size={20} /> 
-    },
-    { 
-      href: "/quotes", 
-      label: t.quotes || "Quotes", 
-      subtitle: "Review pending client contracts",
-      icon: <FileText size={20} /> 
-    },
-    { 
-      href: "/time", 
-      label: t.time || "Time Entries", 
-      subtitle: "Log employee hours and shifts",
-      icon: <Clock size={20} /> 
-    },
-  ];
+  const [sidebarMode, setSidebarMode] = useState("main");
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // --- 2. LOGIC: FIND ACTIVE PAGE ---
-  const getPageDetails = () => {
-    // A. Sort by length desc (so /dashboard/customers matches before /dashboard)
-    const sortedItems = [...navItems].sort((a, b) => b.href.length - a.href.length);
-    
-    // B. Find the first item where the current pathname starts with its href
-    const active = sortedItems.find(item => {
-      if (item.exact) return pathname === item.href;
-      return pathname.startsWith(item.href);
-    });
-
-    // C. Default fallback if nothing matches
-    return active || {
-      label: "Wyatt",
-      subtitle: "Build better. Manage smarter.",
-      icon: <Hammer size={20} />
-    };
-  };
-
-  const activePage = getPageDetails();
-
-
-  // --- 3. AUTH & EFFECTS ---
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (!currentUser) {
-        router.push("/login"); 
-        return;
-      } else {
-        setUser(currentUser);
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [router]);
-
-  if (loading) return (
-    <div className="h-screen flex items-center justify-center bg-[#fdfaf6]">
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-12 h-12 border-4 border-stone-200 border-t-amber-600 rounded-full animate-spin"></div>
-        <p className="text-stone-500 font-medium animate-pulse">Wyatt is loading...</p>
-      </div>
-    </div>
-  );
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   const handleSignOut = async () => {
     await signOut(auth);
     router.push("/login");
   };
 
+  const mainMenuItems = [
+    { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Customers", href: "/customers/", icon: Users },
+    { name: "Documents", href: "/documents/", icon: Folder },
+    { name: "Estimates", href: "/estimates/", icon: Calculator },
+  ];
+
+  const customizationMenuItems = [
+    { name: "Templates", href: "/customizations/templates/", icon: Palette },
+    { name: "Fields", href: "/customizations/fields/", icon: Type },
+    { name: "Forms", href: "/customizations/forms/", icon: FileInput },
+    { name: "Roles & Permissions", href: "/customizations/roles/", icon: ShieldCheck },
+    { name: "SQL utility", href: "/customizations/sqlutil/", icon: Database },
+  ];
+
+  // --- NEW: Company Setup Menu Items ---
+  const companyMenuItems = [
+    { name: "Employees", href: "/company/employees/", icon: UserCheck },
+    // You can add "Departments" or "Offices" here later
+  ];
+
+  const getPageTitle = () => {
+    const mainMatch = mainMenuItems.find(item => 
+      item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
+    );
+    if (mainMatch) return mainMatch.name;
+
+    const customMatch = customizationMenuItems.find(item => pathname.startsWith(item.href));
+    if (customMatch) return customMatch.name;
+
+    const companyMatch = companyMenuItems.find(item => pathname.startsWith(item.href));
+    if (companyMatch) return companyMatch.name;
+
+    return "Wyatt";
+  };
+
   return (
-    <div className="flex h-screen bg-[#fdfaf6] dark:bg-stone-950 font-sans text-stone-900">
-      
-      {/* MOBILE HEADER (< lg) */}
-      <div className="lg:hidden fixed top-0 w-full bg-stone-900 text-[#eaddcf] z-50 px-4 py-3 flex items-center justify-between shadow-md">
-        <span className="font-bold text-xl tracking-tight flex items-center gap-2">
-                <img 
-                src="/system/wyatt_logo.svg" 
-                alt="Logo " 
-                className="w-auto object-contain h-12"
-              />        </span>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-[#eaddcf]">
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+    <div className="min-h-screen bg-[#fdfaf6] dark:bg-stone-950 transition-colors duration-300">
+      {/* --- MOBILE HEADER --- */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-stone-900 border-b border-stone-800 z-50 flex items-center px-4 text-stone-100 shadow-md">
+        <button onClick={() => setIsMobileOpen(true)} className="p-2 hover:bg-stone-800 rounded-lg text-stone-400 hover:text-white transition-colors z-10 relative">
+          <Menu size={24} />
         </button>
-      </div>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+           <span className="font-bold text-lg tracking-tight text-stone-100">{getPageTitle()}</span>
+        </div>
+      </header>
 
-      {/* SIDEBAR NAVIGATION */}
-      <aside className={`
-        fixed lg:static inset-y-0 left-0 z-40 w-64 bg-stone-900 text-stone-400 transform transition-transform duration-200 ease-in-out border-r border-stone-800 flex flex-col
-        ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-      `}>
-        {/* Logo Area */}
-        <div className="h-20 flex items-center px-6 border-b border-stone-800 shrink-0">
-          <div className="flex items-center gap-3 text-[#eaddcf] font-bold text-xl tracking-tight">
+      {isMobileOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-200" onClick={() => setIsMobileOpen(false)} />
+      )}
 
-                <img 
-                src="/system/wyatt_logo.svg" 
-                alt="Logo " 
-                className="w-auto object-contain h-12 px-6"
-              />
+      {/* --- SIDEBAR --- */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-stone-900 text-stone-300 flex flex-col shadow-2xl border-r border-stone-800 transition-transform duration-300 ease-in-out ${isMobileOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:shadow-none`}>
+        <div className="h-20 flex items-center justify-between px-6 border-b border-stone-800 bg-stone-950/50">
+          <div className="flex items-center justify-center gap-2 w-full">
+            <img src="/system/wyatt_logo.svg" alt="Wyatt" className="h-10 w-auto object-contain" />
           </div>
+          <button onClick={() => setIsMobileOpen(false)} className="lg:hidden p-1 text-stone-500 hover:text-white">
+            <X size={20} />
+          </button>
         </div>
 
-        {/* Nav Links */}
-        <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
-          {navItems.map((item) => {
-            // Check active state
-            const isActive = activePage.href === item.href;
-            
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`
-                  flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 group
-                  ${isActive 
-                    ? "bg-[#eaddcf] text-stone-900 shadow-sm" 
-                    : "text-stone-400 hover:bg-stone-800 hover:text-[#eaddcf]"
-                  }
-                `}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <span className={isActive ? "text-stone-800" : "text-stone-500 group-hover:text-[#eaddcf]"}>
-                  {item.icon}
-                </span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          {/* MAIN MENU */}
+          {sidebarMode === "main" && (
+            <div className="space-y-2 animate-in slide-in-from-left-4 duration-300">
+              {mainMenuItems.map((item) => {
+                const isActive = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                return (
+                  <Link key={item.name} href={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive ? "bg-amber-600 text-white font-medium shadow-lg shadow-amber-900/20" : "hover:bg-stone-800 hover:text-white"}`}>
+                    <item.icon size={20} className={isActive ? "text-white" : "text-stone-500 group-hover:text-amber-500 transition-colors"} />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+              
+              <div className="my-4 border-t border-stone-800/50 mx-2"></div>
 
-        {/* Bottom Section */}
-        <div className="p-4 border-t border-stone-800 bg-stone-900/50 shrink-0">
-          {user && (
-            <div className="flex items-center gap-3 mb-4 px-2">
-              <div className="w-9 h-9 rounded-full bg-stone-700 border border-stone-600 flex items-center justify-center text-[#eaddcf] text-xs font-bold">
-                {user.displayName ? user.displayName.charAt(0) : "U"}
-              </div>
-              <div className="min-w-0">
-                <div className="text-[#eaddcf] font-medium text-sm truncate">{user.displayName}</div>
-                <div className="text-xs text-stone-500 truncate">{user.email}</div>
-              </div>
+              {/* Company Setup Toggle */}
+              <button onClick={() => setSidebarMode("company")} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group hover:bg-stone-800 hover:text-white ${pathname.includes("/company") ? "text-amber-500 font-medium" : "text-stone-300"}`}>
+                <div className="flex items-center gap-3">
+                  <Building2 size={20} className="text-stone-500 group-hover:text-amber-500 transition-colors" />
+                  <span>Company Setup</span>
+                </div>
+                <ChevronLeft size={16} className="rotate-180 text-stone-600 group-hover:text-stone-400" />
+              </button>
+
+              <button onClick={() => setSidebarMode("customizations")} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group hover:bg-stone-800 hover:text-white ${pathname.includes("/customizations") ? "text-amber-500 font-medium" : "text-stone-300"}`}>
+                <div className="flex items-center gap-3">
+                  <Sliders size={20} className="text-stone-500 group-hover:text-amber-500 transition-colors" />
+                  <span>Customizations</span>
+                </div>
+                <ChevronLeft size={16} className="rotate-180 text-stone-600 group-hover:text-stone-400" />
+              </button>
             </div>
           )}
-          
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-3 px-2 text-red-400 hover:text-red-300 w-full text-sm font-medium hover:bg-red-900/10 py-2 rounded-lg bg-red-900/20 transition-all duration-200 text-center"
-          >
-            <LogOut size={18} />
-            {t.logout || "Logout"}
+
+          {/* COMPANY SETUP MENU */}
+          {sidebarMode === "company" && (
+            <div className="space-y-2 animate-in slide-in-from-right-4 duration-300">
+              <button onClick={() => setSidebarMode("main")} className="w-full flex items-center gap-2 px-4 py-3 text-stone-400 hover:text-white hover:bg-stone-800 rounded-xl transition-all mb-4">
+                <ChevronLeft size={18} />
+                <span className="text-sm font-bold uppercase tracking-wider">Back</span>
+              </button>
+
+              <div className="px-4 pb-2 text-xs font-semibold text-stone-500 uppercase tracking-widest">Company Setup</div>
+              {companyMenuItems.map((item) => {
+                const isActive = pathname.startsWith(item.href);
+                return (
+                  <Link key={item.name} href={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive ? "bg-stone-800 text-amber-500 font-medium border-l-4 border-amber-500" : "hover:bg-stone-800 hover:text-white border-l-4 border-transparent"}`}>
+                    <item.icon size={18} className={isActive ? "text-amber-500" : "text-stone-500 group-hover:text-amber-500 transition-colors"} />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
+          {/* CUSTOMIZATIONS MENU */}
+          {sidebarMode === "customizations" && (
+            <div className="space-y-2 animate-in slide-in-from-right-4 duration-300">
+              <button onClick={() => setSidebarMode("main")} className="w-full flex items-center gap-2 px-4 py-3 text-stone-400 hover:text-white hover:bg-stone-800 rounded-xl transition-all mb-4">
+                <ChevronLeft size={18} />
+                <span className="text-sm font-bold uppercase tracking-wider">Back</span>
+              </button>
+              <div className="px-4 pb-2 text-xs font-semibold text-stone-500 uppercase tracking-widest">Customizations</div>
+              {customizationMenuItems.map((item) => {
+                const isActive = pathname.startsWith(item.href);
+                return (
+                  <Link key={item.name} href={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive ? "bg-stone-800 text-amber-500 font-medium border-l-4 border-amber-500" : "hover:bg-stone-800 hover:text-white border-l-4 border-transparent"}`}>
+                    <item.icon size={18} className={isActive ? "text-amber-500" : "text-stone-500 group-hover:text-amber-500 transition-colors"} />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </nav>
+
+        <div className="p-4 border-t border-stone-800 bg-stone-950/30">
+          <button onClick={handleSignOut} className="flex items-center gap-3 w-full px-4 py-3 text-stone-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all duration-200">
+            <LogOut size={20} />
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>
 
-      {/* MOBILE OVERLAY */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-stone-900/80 z-30 lg:hidden backdrop-blur-sm"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden pt-14 lg:pt-0">
-        
-        {/* --- DYNAMIC HEADER (Desktop) --- */}
-        <header className="h-20 bg-[#fdfaf6] dark:bg-stone-950 border-b border-stone-200 dark:border-stone-800 hidden lg:flex items-center justify-between px-8 shrink-0">
-          
-          {/* Left: Dynamic Page Info */}
-          <div className="flex items-center gap-4">
-            {/* The Icon Box */}
-            <div className="w-10 h-10 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl flex items-center justify-center text-stone-600 dark:text-stone-400 shadow-sm">
-              {activePage.icon}
-            </div>
-            
-            {/* The Title & Subtitle */}
-            <div className="flex flex-col">
-              <h1 className="text-xl font-bold text-stone-900 dark:text-[#eaddcf] font-serif leading-tight">
-                {activePage.label}
-              </h1>
-              <p className="text-xs font-medium text-stone-500 dark:text-stone-400">
-                {activePage.subtitle}
-              </p>
-            </div>
-          </div>
-
-          {/* Right: Controls */}
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setLang(lang === "en" ? "fr" : "en")}
-              className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-stone-500 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 rounded-full transition-all uppercase tracking-wide border border-stone-200"
-            >
-              <Globe size={14} />
-              {lang === "en" ? "EN" : "FR"}
-            </button>
-          </div>
-        </header>
-
-        {/* Page Content Scrollable Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
-      </div>
+      <main className="flex-1 lg:ml-64 p-4 lg:p-8 pt-20 lg:pt-8 overflow-y-auto min-h-screen">
+        <div className="max-w-7xl mx-auto">{children}</div>
+      </main>
     </div>
   );
 }

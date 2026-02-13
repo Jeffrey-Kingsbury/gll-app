@@ -210,7 +210,7 @@ export default function DocumentsClient({ initialFolders = [], initialFiles = []
                         <tr>
                             <th className="px-6 py-4 font-bold text-stone-400 uppercase tracking-wider text-xs w-16">Type</th>
                             <th className="px-6 py-4 font-bold text-stone-400 uppercase tracking-wider text-xs">Name</th>
-                            <th className="px-6 py-4 font-bold text-stone-400 uppercase tracking-wider text-xs w-32">Size</th> {/* New Column */}
+                            <th className="px-6 py-4 font-bold text-stone-400 uppercase tracking-wider text-xs w-32">Size</th>
                             <th className="px-6 py-4 font-bold text-stone-400 uppercase tracking-wider text-xs w-48">Date Added</th>
                             <th className="px-6 py-4 font-bold text-stone-400 uppercase tracking-wider text-xs text-right w-32">Actions</th>
                         </tr>

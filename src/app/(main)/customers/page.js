@@ -75,7 +75,7 @@ export default async function CustomersPage() {
                           View
                         </Link>
                         <Link 
-                          href={`/customers/${customer.internalid}/edit`}
+href={`/customers/${customer.internalid}?edit=true`}
                           className="text-xs font-bold text-amber-600 hover:text-amber-500 px-3 py-1.5 rounded-md hover:bg-stone-700 transition-all"
                         >
                           Edit

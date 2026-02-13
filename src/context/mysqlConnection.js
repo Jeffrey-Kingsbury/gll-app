@@ -1,11 +1,11 @@
-// context/mysqlConnection.js
 "use server";
 import mysql from 'mysql2/promise';
 
-// 1. Create a Global Pool (Singleton)
-// We create this ONCE and reuse it, rather than opening/closing per request.
+// --- 1. CONNECTION POOLS (SINGLETONS) ---
+
+// Primary Read/Write Pool
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || '127.0.0.1',      // <--- Inside Docker, this will be "db"
+    host: process.env.DB_HOST || '127.0.0.1',
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
@@ -14,21 +14,193 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-// Helper to get a connection if needed explicitly, though pool.execute handles it automatically.
-export async function getMySQLConnection() {
-    return pool;
-}
+// Restricted Read-Only Pool
+const readOnlyPool = mysql.createPool({
+    host: process.env.DB_HOST || '127.0.0.1',
+    user: process.env.DB_READONLY_USER || 'gll_readonly',
+    password: process.env.DB_READONLY_PASS,
+    database: process.env.DB_NAME,
+    waitForConnections: true,
+    connectionLimit: 5,
+    queueLimit: 0
+});
 
-// --- OPTIMIZED FUNCTIONS ---
-// Note: We removed "await connection.end()" from all functions 
-// because we want to keep the pool open for the next user!
+// --- 2. UTILITY & GENERIC FUNCTIONS ---
 
-export async function queryMySQL(query) {
+export async function mysql_executeQueryReadOnly(query, params = []) {
+    const lowerQ = query.toLowerCase().trim();
+    if (!lowerQ.startsWith("select") && !lowerQ.startsWith("show") && !lowerQ.startsWith("describe")) {
+        throw new Error("Security Violation: Only SELECT, SHOW, or DESCRIBE allowed in Read-Only mode.");
+    }
     try {
-        const [rows] = await pool.query(query);
+        const [rows] = await readOnlyPool.execute(query, params);
         return rows;
     } catch (error) {
-        console.error("MySQL Query Error:", error);
+        console.error("Read-Only Query Error:", error);
+        throw error;
+    }
+}
+
+export async function mysql_updateRecord(tableName, internalid, params) {
+    if (!params || Object.keys(params).length === 0) return false;
+    
+    // Safety: Ensure internalid is never overwritten
+    const safeParams = { ...params };
+    delete safeParams.internalid;
+
+    try {
+        const keys = Object.keys(safeParams);
+        const setClause = keys.map(key => `${key} = ?`).join(", ");
+        const values = [...Object.values(safeParams), internalid];
+        const query = `UPDATE ${tableName} SET ${setClause} WHERE internalid = ?`;
+
+        const [result] = await pool.execute(query, values);
+        return result.affectedRows > 0;
+    } catch (error) {
+        console.error(`Update Error (${tableName}):`, error);
+        throw error;
+    }
+}
+
+export async function mysql_getDatabaseSchema() {
+    try {
+        const query = `
+            SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = ? 
+            ORDER BY TABLE_NAME, ORDINAL_POSITION
+        `;
+        const [rows] = await readOnlyPool.execute(query, [process.env.DB_NAME]);
+        const schema = {};
+        rows.forEach(row => {
+            if (!schema[row.TABLE_NAME]) schema[row.TABLE_NAME] = [];
+            schema[row.TABLE_NAME].push({ name: row.COLUMN_NAME, type: row.DATA_TYPE });
+        });
+        return schema;
+    } catch (error) {
+        console.error("Schema Fetch Error:", error);
+        return {};
+    }
+}
+
+// --- 3. CUSTOMER FUNCTIONS ---
+
+export async function mysql_getCustomers() {
+    try {
+        const [rows] = await pool.execute("SELECT internalid, name FROM customers ORDER BY internalid ASC");
+        return rows;
+    } catch (error) {
+        console.error("Fetch Customers Error:", error);
+        return [];
+    }
+}
+
+export async function mysql_getCustomerById(internalid) {
+    try {
+        const [rows] = await pool.execute("SELECT * FROM customers WHERE internalid = ?", [internalid]);
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+export async function mysql_createCustomer(params) {
+    try {
+        const query = `INSERT INTO customers (name, email, phone, website, address, status, notes, logo_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+        const values = [params.name, params.email || null, params.phone || null, params.website || null, params.address || null, params.status || 'Active', params.notes || null, params.logo_url || null];
+        const [result] = await pool.execute(query, values);
+        return result.insertId;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function mysql_deleteCustomer(id) {
+    try {
+        await pool.execute("DELETE FROM customers WHERE internalid = ?", [id]);
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function mysql_updateCustomer(internalid, params) {
+    // Delegates to the generic updateRecord utility we built
+    return await mysql_updateRecord('customers', internalid, params);
+}
+
+// --- 4. EMPLOYEE FUNCTIONS ---
+
+export async function mysql_getEmployeeById(internalid) {
+    try {
+        const [rows] = await pool.execute("SELECT * FROM employees WHERE internalid = ?", [internalid]);
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+export async function mysql_createEmployee(params) {
+    try {
+        const query = `INSERT INTO employees (first_name, last_name, email, phone, job_title, department, hire_date, level_access, status, salary_basis, base_pay, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        const values = [params.first_name, params.last_name, params.email, params.phone || null, params.job_title || null, params.department || null, params.hire_date || null, params.level_access || 1, params.status || 'active', params.salary_basis || 'salary', params.base_pay || 0, params.notes || null];
+        const [result] = await pool.execute(query, values);
+        return result.insertId;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function mysql_updateEmployee(internalid, params) {
+    // We delegate the work to our generic update utility
+    return await mysql_updateRecord('employees', internalid, params);
+}
+
+export async function mysql_deleteEmployee(internalid) {
+    try {
+        const [result] = await pool.execute("DELETE FROM employees WHERE internalid = ?", [internalid]);
+        return result.affectedRows > 0;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// --- 5. DOCUMENT & FOLDER FUNCTIONS ---
+
+export async function mysql_addFileRecord(name, url, type, folderId = null, size = 0) {
+    try {
+        const query = "INSERT INTO documents (name, url, type, folder_id, size) VALUES (?, ?, ?, ?, ?)";
+        const [result] = await pool.execute(query, [name, url, type, folderId || null, size]);
+        return result.insertId;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function mysql_getAllImages() {
+    try {
+        const [rows] = await pool.execute("SELECT * FROM documents WHERE type LIKE 'image/%' ORDER BY created_at DESC");
+        return rows;
+    } catch (error) {
+        return [];
+    }
+}
+
+export async function mysql_deleteFile(internalid) {
+    try {
+        await pool.execute("DELETE FROM documents WHERE internalid = ?", [internalid]);
+    } catch (error) {
+        throw error;
+    }
+}
+
+// --- 6. USER & AUTH FUNCTIONS ---
+
+export async function mysql_getUserByGoogleId(googleId) {
+    try {
+        const [rows] = await pool.execute("SELECT * FROM users WHERE google_id = ?", [googleId]);
+        return rows.length > 0 ? rows[0] : null;
+    } catch (error) {
         throw error;
     }
 }
@@ -39,165 +211,6 @@ export async function mysql_addUser(name, email, googleId, role = 'user') {
         const [result] = await pool.execute(query, [name, email, googleId, role]);
         return result.insertId;
     } catch (error) {
-        console.error("MySQL Insert Error:", error);
-        throw error;
-    }
-}
-
-export async function mysql_getUserByGoogleId(googleId) {
-    try {
-        const query = "SELECT * FROM users WHERE google_id = ?";
-        const [rows] = await pool.execute(query, [googleId]);
-        return rows.length > 0 ? rows[0] : null;
-    } catch (error) {
-        console.error("MySQL Select Error:", error);
-        throw error;
-    }
-}
-export async function mysql_getCustomers() {
-    try {
-        const query = "SELECT internalid, name FROM customers ORDER BY internalid ASC";
-        const [rows] = await pool.execute(query);
-        console.log("MySQL Customers Fetched:", rows); // Debug log to verify data fetching
-        return rows;
-    } catch (error) {
-        console.error("MySQL Customer Fetch Error:", error);
-        return [];
-    }
-}
-
-export async function mysql_createCustomer(name) {
-    try {
-        console.log("📝 Creating Customer:", name);
-        const query = "INSERT INTO customers (name) VALUES (?)";
-        const [result] = await pool.execute(query, [name]);
-        console.log("✅ Customer Created, ID:", result.insertId);
-        return result.insertId;
-    } catch (error) {
-        console.error("❌ MySQL Create Customer Error:", error);
-        throw error;
-    }
-}
-
-export async function mysql_getCustomerById(internalid) {
-    try {
-        const query = "SELECT * FROM customers WHERE internalid = ?";
-        const [rows] = await pool.execute(query, [internalid]);
-        return rows.length > 0 ? rows[0] : null;
-    } catch (error) {
-        console.error("MySQL Get By ID Error:", error);
-        return null;
-    }
-}
-
-export async function mysql_updateCustomer(internalid, name) {
-    try {
-        const query = "UPDATE customers SET name = ? WHERE internalid = ?";
-        const [result] = await pool.execute(query, [name, internalid]);
-        return result.affectedRows > 0;
-    } catch (error) {
-        console.error("MySQL Update Error:", error);
-        throw error;
-    }
-}
-
-export async function mysql_addFileRecord(name, url, type, folderId = null, size = 0) {
-    try {
-        const query = "INSERT INTO documents (name, url, type, folder_id, size) VALUES (?, ?, ?, ?, ?)";
-        const fId = folderId === "" ? null : folderId;
-        
-        const [result] = await pool.execute(query, [name, url, type, fId, size]);
-        return result.insertId;
-    } catch (error) {
-        console.error("MySQL Add File Error:", error);
-        throw error;
-    }
-}
-
-export async function mysql_getStorageUsage() {
-    try {
-        const query = "SELECT SUM(size) as totalBytes FROM documents";
-        const [rows] = await pool.execute(query);
-        return rows[0].totalBytes || 0;
-    } catch (error) {
-        console.error("Storage Check Error:", error);
-        return 0;
-    }
-}
-
-export async function mysql_createFolder(name, parentId = null) {
-    try {
-        const query = "INSERT INTO folders (name, parent_id) VALUES (?, ?)";
-        const pId = parentId === "" ? null : parentId;
-        
-        const [result] = await pool.execute(query, [name, pId]);
-        return result.insertId;
-    } catch (error) {
-        console.error("MySQL Create Folder Error:", error);
-        throw error;
-    }
-}
-
-export async function mysql_getAllImages() {
-    try {
-        const query = "SELECT * FROM documents WHERE type LIKE 'image/%' ORDER BY created_at DESC";
-        const [rows] = await pool.execute(query);
-        return rows;
-    } catch (error) {
-        console.error("MySQL Get Images Error:", error);
-        return [];
-    }
-}
-
-export async function mysql_getAllFolders() {
-    try {
-        const query = "SELECT * FROM folders ORDER BY name ASC";
-        const [rows] = await pool.execute(query);
-        return rows;
-    } catch (error) {
-        console.error("MySQL Get Folders Error:", error);
-        return [];
-    }
-}
-
-export async function mysql_getAllFiles() {
-    try {
-        const query = "SELECT * FROM documents ORDER BY created_at DESC";
-        const [rows] = await pool.execute(query);
-        return rows;
-    } catch (error) {
-        console.error("MySQL Get Files Error:", error);
-        return [];
-    }
-}
-
-export async function mysql_getFileById(internalid) {
-    try {
-        const query = "SELECT * FROM documents WHERE internalid = ?";
-        const [rows] = await pool.execute(query, [internalid]);
-        return rows[0];
-    } catch (error) {
-        console.error("MySQL Get File Error:", error);
-        return null;
-    }
-}
-
-export async function mysql_deleteFile(internalid) {
-    try {
-        const query = "DELETE FROM documents WHERE internalid = ?";
-        await pool.execute(query, [internalid]);
-    } catch (error) {
-        console.error("MySQL Delete File Error:", error);
-        throw error;
-    }
-}
-
-export async function mysql_deleteFolder(internalid) {
-    try {
-        const query = "DELETE FROM folders WHERE internalid = ?";
-        await pool.execute(query, [internalid]);
-    } catch (error) {
-        console.error("MySQL Delete Folder Error:", error);
         throw error;
     }
 }

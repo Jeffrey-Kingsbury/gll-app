@@ -6,7 +6,7 @@ import { SettingsProvider } from "../context/SettingsContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "GLL | Construction Management",
+  title: `Wyatt | ${process.env.NEXT_PUBLIC_COMPANY_NAME}`,
   description: "Project management for general contractors",
 };
 

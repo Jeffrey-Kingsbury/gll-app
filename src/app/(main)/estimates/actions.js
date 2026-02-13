@@ -1,6 +1,6 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { queryMySQL } from "../../../context/mysqlConnection"; // Assuming your generic query helper
+import {  mysql_executeQueryReadOnly } from "../../../context/mysqlConnection"; // Assuming your generic query helper
 // import { pool } from "../../../context/mysqlConnection"; // Assume this exists
 export async function getProjectsAction() {
   try {
@@ -51,9 +51,47 @@ export async function getTemplateItemsAction(templateId) {
   return baseItems;
 }
 
-export async function getEstimatesAction() {
-  // await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
-  return MOCK_ESTIMATES;
+export async function getEstimatesAction({ 
+  sortCol = 'internalid', 
+  sortDir = 'desc', 
+  page = 1, 
+  limit = 50 
+} = {}) {
+  
+  const validCols = ['internalid', 'project', 'client', 'date', 'total', 'status'];
+  const column = validCols.includes(sortCol) ? sortCol : 'internalid';
+  const direction = sortDir.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+  
+  const offset = (page - 1) * limit;
+
+  try {
+    // 1. The Data Query
+    const dataQuery = `
+      SELECT * FROM estimates 
+      ORDER BY ${column} ${direction} 
+      LIMIT ? OFFSET ?
+    `;
+    
+    // CRITICAL: Ensure the array [limit, offset] matches the two '?' above
+    const data = await mysql_executeQueryReadOnly(dataQuery, [
+        parseInt(limit), 
+        parseInt(offset)
+    ]);
+
+    // 2. The Count Query (No placeholders here, so no second argument)
+    const countQuery = `SELECT COUNT(*) as total FROM estimates`;
+    const countResult = await mysql_executeQueryReadOnly(countQuery);
+    const totalCount = countResult[0].total;
+
+    return {
+      data,
+      totalCount,
+      totalPages: Math.ceil(totalCount / limit)
+    };
+  } catch (error) {
+    console.error("Fetch Estimates Error:", error);
+    return { data: [], totalCount: 0, totalPages: 0 };
+  }
 }
 
 export async function getEstimateByIdAction(id) {

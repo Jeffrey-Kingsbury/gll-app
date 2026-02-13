@@ -26,6 +26,7 @@ services:
     volumes:
       # Persist uploads so they don't vanish when container restarts
       - ./public/uploads:/app/public/uploads
+      - ./public/system:/app/public/system
     depends_on:
       - db
 

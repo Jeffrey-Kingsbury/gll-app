@@ -55,6 +55,7 @@ export default function NewEstimatePage() {
 
                 // Recover Draft Logic
                 const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+                console.log("Checking for saved draft:", saved);
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     if (parsed.lineItems && parsed.lineItems.length > 0) {
@@ -162,7 +163,7 @@ export default function NewEstimatePage() {
                          onClick={() => {
                             if(confirm("Discard changes?")) {
                                 localStorage.removeItem(LOCAL_STORAGE_KEY);
-                                window.location.reload();
+                                window.location.href = "/estimates";
                             }
                         }}
                         className="px-4 py-2 text-white bg-red-700 hover:bg-red-600 rounded-xl transition-colors text-sm font-medium"
