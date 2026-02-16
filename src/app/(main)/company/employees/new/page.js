@@ -1,17 +1,35 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // 1. Import useEffect
 import { useRouter } from "next/navigation";
-import { createEmployeeAction } from "../actions";
-import { ArrowLeft, Save, UserPlus, Briefcase, Shield } from "lucide-react";
+import { createEmployeeAction, getAccessLevelOptions } from "../actions"; // 2. Import the getter
+import { ArrowLeft, UserPlus } from "lucide-react";
 
 export default function NewEmployeePage() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [accessLevels, setAccessLevels] = useState([]); // 3. State for the dropdown
+
+    // 4. Fetch Access Levels on Mount
+    useEffect(() => {
+        async function loadData() {
+            const data = await getAccessLevelOptions();
+            setAccessLevels(data || []);
+        }
+        loadData();
+    }, []);
 
     async function handleSubmit(event) {
         event.preventDefault();
         setIsLoading(true);
         const formData = new FormData(event.target);
+
+        // Validation: Ensure an access level is selected
+        if (!formData.get("level_access")) {
+            alert("Please select an access level");
+            setIsLoading(false);
+            return;
+        }
+
         const result = await createEmployeeAction(formData);
 
         if (result.success) {
@@ -59,15 +77,23 @@ export default function NewEmployeePage() {
                         <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Employment</h3>
                         <Input label="Job Title" name="job_title" placeholder="e.g. Project Manager" />
                         <div className="grid grid-cols-2 gap-4">
-                             <Input label="Hire Date" name="hire_date" type="date" />
-                             <div className="space-y-1">
+                            <Input label="Hire Date" name="hire_date" type="date" required />
+                            <div className="space-y-1">
                                 <label className="text-xs font-bold text-stone-400">Access Level</label>
-                                <select name="level_access" className="w-full p-2.5 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-stone-800 dark:text-stone-200 outline-none">
-                                    <option value="1">Standard</option>
-                                    <option value="2">Manager</option>
-                                    <option value="3">Admin</option>
+                                <select
+                                    name="level_access"
+                                    className="w-full p-2.5 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
+                                    defaultValue=""
+                                    required
+                                >
+                                    <option value="" disabled>Select Role...</option>
+                                    {accessLevels.map(level => (
+                                        <option key={level.internalid} value={level.internalid}>
+                                            {level.access_level_name}
+                                        </option>
+                                    ))}
                                 </select>
-                             </div>
+                            </div>
                         </div>
                     </section>
                 </div>

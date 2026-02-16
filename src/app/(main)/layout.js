@@ -1,6 +1,6 @@
 // app/(main)/layout.js
 "use client";
-
+import { useCurrentEmployee } from "@/hooks/useCurrentEmployee";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -20,17 +20,19 @@ import {
   Menu,
   X,
   Database,
+  Clipboard,
+  Clock,
   Building2, // Icon for Company Setup
   UserCheck  // Icon for Employees
 } from "lucide-react";
-import { signOut } from "firebase/auth";
-import { auth } from "../../lib/firebase";
 import { useSettings } from "../../context/SettingsContext";
 
 export default function MainLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const { darkMode } = useSettings();
+  const { employee, loading, isAdmin } = useCurrentEmployee();
+  console.log(employee);
 
   const [sidebarMode, setSidebarMode] = useState("main");
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -40,33 +42,43 @@ export default function MainLayout({ children }) {
   }, [pathname]);
 
   const handleSignOut = async () => {
-    await signOut(auth);
     router.push("/login");
   };
 
-  const mainMenuItems = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Customers", href: "/customers/", icon: Users },
-    { name: "Documents", href: "/documents/", icon: Folder },
-    { name: "Estimates", href: "/estimates/", icon: Calculator },
-  ];
 
-  const customizationMenuItems = [
-    { name: "Templates", href: "/customizations/templates/", icon: Palette },
-    { name: "Fields", href: "/customizations/fields/", icon: Type },
-    { name: "Forms", href: "/customizations/forms/", icon: FileInput },
-    { name: "Roles & Permissions", href: "/customizations/roles/", icon: ShieldCheck },
-    { name: "SQL utility", href: "/customizations/sqlutil/", icon: Database },
-  ];
 
-  // --- NEW: Company Setup Menu Items ---
-  const companyMenuItems = [
-    { name: "Employees", href: "/company/employees/", icon: UserCheck },
-    // You can add "Departments" or "Offices" here later
-  ];
+  const mainMenuItems = [];
+  const customizationMenuItems = [];
+  const companyMenuItems = [];
+  if (employee && employee.accessLevel == 3) {
+    mainMenuItems.push(
+      { name: "Time Entries", href: "/time-entries/", icon: Clock },
+    )
+  } else {
+    customizationMenuItems.push(
+      { name: "Templates", href: "/customizations/templates/", icon: Palette },
+      { name: "Fields", href: "/customizations/fields/", icon: Type },
+      { name: "Forms", href: "/customizations/forms/", icon: FileInput },
+      { name: "Roles & Permissions", href: "/customizations/roles/", icon: ShieldCheck },
+      { name: "SQL utility", href: "/customizations/sqlutil/", icon: Database },
+    )
+    mainMenuItems.push(
+      { name: "Dashboard", href: "/", icon: LayoutDashboard },
+      { name: "Customers", href: "/customers/", icon: Users },
+      { name: "Documents", href: "/documents/", icon: Folder },
+      { name: "Estimates", href: "/estimates/", icon: Calculator },
+      { name: "Projects", href: "/projects/", icon: Clipboard },
+      { name: "Time Entries", href: "/time-entries/", icon: Clock },
+    )
+    companyMenuItems.push(
+      { name: "Employees", href: "/company/employees/", icon: UserCheck },
+    )
+  }
+
+
 
   const getPageTitle = () => {
-    const mainMatch = mainMenuItems.find(item => 
+    const mainMatch = mainMenuItems.find(item =>
       item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
     );
     if (mainMatch) return mainMatch.name;
@@ -88,7 +100,7 @@ export default function MainLayout({ children }) {
           <Menu size={24} />
         </button>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-           <span className="font-bold text-lg tracking-tight text-stone-100">{getPageTitle()}</span>
+          <span className="font-bold text-lg tracking-tight text-stone-100">{getPageTitle()}</span>
         </div>
       </header>
 
@@ -120,26 +132,30 @@ export default function MainLayout({ children }) {
                   </Link>
                 );
               })}
-              
+
               <div className="my-4 border-t border-stone-800/50 mx-2"></div>
 
               {/* Company Setup Toggle */}
-              <button onClick={() => setSidebarMode("company")} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group hover:bg-stone-800 hover:text-white ${pathname.includes("/company") ? "text-amber-500 font-medium" : "text-stone-300"}`}>
-                <div className="flex items-center gap-3">
-                  <Building2 size={20} className="text-stone-500 group-hover:text-amber-500 transition-colors" />
-                  <span>Company Setup</span>
-                </div>
-                <ChevronLeft size={16} className="rotate-180 text-stone-600 group-hover:text-stone-400" />
-              </button>
-
-              <button onClick={() => setSidebarMode("customizations")} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group hover:bg-stone-800 hover:text-white ${pathname.includes("/customizations") ? "text-amber-500 font-medium" : "text-stone-300"}`}>
-                <div className="flex items-center gap-3">
-                  <Sliders size={20} className="text-stone-500 group-hover:text-amber-500 transition-colors" />
-                  <span>Customizations</span>
-                </div>
-                <ChevronLeft size={16} className="rotate-180 text-stone-600 group-hover:text-stone-400" />
-              </button>
+              {employee.accessLevel != 3 && (
+                <button onClick={() => setSidebarMode("company")} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group hover:bg-stone-800 hover:text-white ${pathname.includes("/company") ? "text-amber-500 font-medium" : "text-stone-300"}`}>
+                  <div className="flex items-center gap-3">
+                    <Building2 size={20} className="text-stone-500 group-hover:text-amber-500 transition-colors" />
+                    <span>Company Setup</span>
+                  </div>
+                  <ChevronLeft size={16} className="rotate-180 text-stone-600 group-hover:text-stone-400" />
+                </button>
+              )}
+              {employee.accessLevel != 3 && (
+                <button onClick={() => setSidebarMode("customizations")} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group hover:bg-stone-800 hover:text-white ${pathname.includes("/customizations") ? "text-amber-500 font-medium" : "text-stone-300"}`}>
+                  <div className="flex items-center gap-3">
+                    <Sliders size={20} className="text-stone-500 group-hover:text-amber-500 transition-colors" />
+                    <span>Customizations</span>
+                  </div>
+                  <ChevronLeft size={16} className="rotate-180 text-stone-600 group-hover:text-stone-400" />
+                </button>
+              )}
             </div>
+
           )}
 
           {/* COMPANY SETUP MENU */}

@@ -4,9 +4,10 @@ const nextConfig = {
   reactCompiler: true,
   trailingSlash: true,
   images: {
-    unoptimized: true, 
+    unoptimized: true,
   },
   output: 'standalone',
+  allowedDevOrigins: ['http://localhost:3000', '192.168.2.136'],
 };
 
 export default nextConfig;

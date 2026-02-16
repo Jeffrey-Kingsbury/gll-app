@@ -1,27 +1,108 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import {  mysql_executeQueryReadOnly } from "../../../context/mysqlConnection"; // Assuming your generic query helper
-// import { pool } from "../../../context/mysqlConnection"; // Assume this exists
+import {
+  mysql_executeQueryReadOnly,
+  mysql_getProjects,
+  mysql_transaction,
+  mysql_query
+} from "../../../context/mysqlConnection";
+
+
+// --- ACTIONS ---
+
 export async function getProjectsAction() {
   try {
-    // Fetching internalid and name as requested
-    const projects = await queryMySQL("SELECT internalid, name, client_name FROM projects ORDER BY name ASC");
+    const projects = await mysql_getProjects();
+    // Normalize data if needed, but returning rows directly is usually fine
     return JSON.parse(JSON.stringify(projects));
   } catch (e) {
     console.error("Error fetching projects", e);
-    // Fallback mock data if DB fails
-    return [
-      { internalid: 1, name: "Smith Kitchen Reno", client_name: "John Smith" },
-      { internalid: 2, name: "Downtown Office", client_name: "TechCorp" },
-    ];
+    return [];
   }
 }
-// MOCK DATA for demonstration (Replace with actual MySQL queries)
-const MOCK_ESTIMATES = [
-  { id: 101, project: "Smith Kitchen Reno", client: "John Smith", total: 45000.00, status: "Draft", date: "2026-02-08" },
-  { id: 102, project: "Downtown Office", client: "TechCorp", total: 120000.00, status: "Sent", date: "2026-02-05" },
-];
 
+export async function getEstimateByIdAction(id) {
+  try {
+    const [estimate] = await mysql_executeQueryReadOnly(
+      "SELECT * FROM estimates WHERE internalid = ?",
+      [id]
+    );
+
+    if (!estimate) return null;
+
+    const items = await mysql_executeQueryReadOnly(
+      "SELECT * FROM estimate_items WHERE estimate_id = ? ORDER BY internalid ASC",
+      [id]
+    );
+
+    return { ...estimate, items };
+  } catch (error) {
+    console.error("Get Estimate Error:", error);
+    return null;
+  }
+}
+
+// --- UPDATE ESTIMATE ---
+export async function updateEstimateAction(internalid, data) {
+  try {
+    return await mysql_transaction(async (connection) => {
+      // 1. Update Main Record
+      const updateQuery = `
+        UPDATE estimates SET 
+          project_name = ?, project_id = ?, client_name = ?,
+          labor_total = ?, material_total = ?, 
+          admin_fee_percent = ?, admin_fee_amount = ?, 
+          subtotal = ?, grand_total = ?, status = ?
+        WHERE internalid = ?
+      `;
+
+      const values = [
+        data.projectName,
+        data.selectedProjectId || null,
+        data.clientName || 'Unknown Client', // Ensure this is passed
+        data.totals.laborTotal,
+        data.totals.materialTotal,
+        data.adminFee,
+        data.totals.adminAmt,
+        data.totals.subtotal,
+        data.totals.grandTotal,
+        data.status || 'Draft',
+        internalid
+      ];
+
+      await connection.execute(updateQuery, values);
+
+      // 2. Delete Old Items (Simplest way to handle re-ordering/deletions)
+      await connection.execute("DELETE FROM estimate_items WHERE estimate_id = ?", [internalid]);
+
+      // 3. Insert New Items
+      if (data.items && data.items.length > 0) {
+        const itemQuery = `
+          INSERT INTO estimate_items (
+              estimate_id, code, category, subcategory, details, labor_cost, material_cost
+          ) VALUES ?
+        `;
+
+        const itemValues = data.items.map(item => [
+          internalid,
+          item.code,
+          item.category || 'Uncategorized',
+          item.subcategory,
+          item.details,
+          item.labor || 0,
+          item.material || 0
+        ]);
+
+        await connection.query(itemQuery, [itemValues]);
+      }
+
+      return { success: true };
+    });
+  } catch (error) {
+    console.error("Update Estimate Error:", error);
+    return { success: false, error: error.message };
+  }
+}
 
 export async function getTemplatesAction() {
   return [
@@ -33,7 +114,6 @@ export async function getTemplatesAction() {
 }
 
 export async function getTemplateItemsAction(templateId) {
-  // Return different items based on ID
   const baseItems = [
     { code: "100", category: "Demolition", subcategory: "Site Prep", details: "Remove existing fixtures", labor: 0, material: 0 },
     { code: "200", category: "Framing", subcategory: "Lumber", details: "2x4 and 2x6 material", labor: 0, material: 0 },
@@ -41,44 +121,47 @@ export async function getTemplateItemsAction(templateId) {
   ];
 
   if (templateId === 'kitchen') {
-      return [
-          ...baseItems,
-          { code: "400", category: "Cabinetry", subcategory: "Install", details: "Base and upper cabinets", labor: 0, material: 0 },
-          { code: "401", category: "Cabinetry", subcategory: "Hardware", details: "Handles and pulls", labor: 0, material: 0 },
-      ];
+    return [
+      ...baseItems,
+      { code: "400", category: "Cabinetry", subcategory: "Install", details: "Base and upper cabinets", labor: 0, material: 0 },
+      { code: "401", category: "Cabinetry", subcategory: "Hardware", details: "Handles and pulls", labor: 0, material: 0 },
+    ];
   }
-  
+
   return baseItems;
 }
 
-export async function getEstimatesAction({ 
-  sortCol = 'internalid', 
-  sortDir = 'desc', 
-  page = 1, 
-  limit = 50 
+export async function getEstimatesAction({
+  sortCol = 'internalid',
+  sortDir = 'desc',
+  page = 1,
+  limit = 50
 } = {}) {
-  
-  const validCols = ['internalid', 'project', 'client', 'date', 'total', 'status'];
-  const column = validCols.includes(sortCol) ? sortCol : 'internalid';
+
+  const validCols = ['internalid', 'project_name', 'client_name', 'date', 'grand_total', 'status'];
+
+  // Mapping for frontend sort keys to DB columns
+  const colMap = {
+    'project': 'project_name',
+    'client': 'client_name',
+    'total': 'grand_total',
+    'id': 'internalid'
+  };
+
+  const column = colMap[sortCol] || (validCols.includes(sortCol) ? sortCol : 'internalid');
   const direction = sortDir.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
-  
   const offset = (page - 1) * limit;
 
   try {
-    // 1. The Data Query
+    const limitVal = parseInt(limit) || 50;
+    const offsetVal = parseInt(offset) || 0;
     const dataQuery = `
       SELECT * FROM estimates 
       ORDER BY ${column} ${direction} 
       LIMIT ? OFFSET ?
     `;
-    
-    // CRITICAL: Ensure the array [limit, offset] matches the two '?' above
-    const data = await mysql_executeQueryReadOnly(dataQuery, [
-        parseInt(limit), 
-        parseInt(offset)
-    ]);
+    const data = await mysql_executeQueryReadOnly(dataQuery, [limitVal, offsetVal]);
 
-    // 2. The Count Query (No placeholders here, so no second argument)
     const countQuery = `SELECT COUNT(*) as total FROM estimates`;
     const countResult = await mysql_executeQueryReadOnly(countQuery);
     const totalCount = countResult[0].total;
@@ -90,31 +173,83 @@ export async function getEstimatesAction({
     };
   } catch (error) {
     console.error("Fetch Estimates Error:", error);
+    // Return empty structure if tables don't exist or other error
     return { data: [], totalCount: 0, totalPages: 0 };
   }
 }
 
-export async function getEstimateByIdAction(id) {
-  // Return specific estimate data + line items
-  return null; // Implement fetch logic
-}
 
 export async function saveEstimateAction(data) {
-  console.log("Saving Estimate to DB:", data);
-  // INSERT INTO estimates ...
-  // INSERT INTO estimate_items ...
-  revalidatePath("/estimates");
-  return { success: true, newId: Math.floor(Math.random() * 1000) };
-}
+  try {
 
-export async function getEstimateTemplateAction() {
-    // This returns the default rows for a new estimate
-    // You can move your `ESTIMATE_ITEMS` constant here
-    return [
-        { code: "100", category: "Demolition", subcategory: "Site Prep", details: "Remove existing fixtures", cost: 0 },
-        { code: "101", category: "Demolition", subcategory: "Disposal", details: "Bin rental and fees", cost: 0 },
-        { code: "200", category: "Framing", subcategory: "Lumber", details: "2x4 and 2x6 material", cost: 0 },
-        { code: "201", category: "Framing", subcategory: "Labor", details: "Carpentry crew", cost: 0 },
-        { code: "300", category: "Electrical", subcategory: "Rough-in", details: "Wiring and boxes", cost: 0 },
-    ];
+    return await mysql_transaction(async (connection) => {
+      // 1. Prepare Estimate Data
+      const projectName = data.projectMode === 'new' ? data.projectName : 'Existing Project'; // Logic to fetch name if existing could be added
+      // If existing project, ideally we fetch the name. For now let's prioritize the ID.
+
+      let clientName = data.clientName || 'Unknown Client';
+
+      // Helper: if projectMode is existing, we should probably fetch the project name/client from DB
+      // But since we are in a transaction, we can do it here. 
+      if (data.projectMode === 'existing' && data.selectedProjectId) {
+        const [projs] = await connection.execute("SELECT name, client_name FROM projects WHERE internalid = ?", [data.selectedProjectId]);
+        if (projs.length > 0) {
+          // override with actual data
+          clientName = projs[0].client_name;
+        }
+      }
+
+      const estimateQuery = `
+              INSERT INTO estimates (
+                  project_name, project_id, client_name, 
+                  labor_total, material_total, 
+                  admin_fee_percent, admin_fee_amount, 
+                  subtotal, grand_total, status
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `;
+
+      const estimateValues = [
+        data.projectName || 'Project', // Fallback
+        data.selectedProjectId || null,
+        clientName,
+        data.totals.laborTotal,
+        data.totals.materialTotal,
+        data.adminFee,
+        data.totals.adminAmt,
+        data.totals.subtotal,
+        data.totals.grandTotal,
+        'Draft'
+      ];
+
+      const [estResult] = await connection.execute(estimateQuery, estimateValues);
+      const newEstimateId = estResult.insertId;
+
+      // 2. Insert Items
+      if (data.items && data.items.length > 0) {
+        const itemQuery = `
+                  INSERT INTO estimate_items (
+                      estimate_id, code, category, subcategory, details, labor_cost, material_cost
+                  ) VALUES ?
+              `;
+
+        const itemValues = data.items.map(item => [
+          newEstimateId,
+          item.code,
+          item.category || 'Uncategorized',
+          item.subcategory,
+          item.details,
+          item.labor || 0,
+          item.material || 0
+        ]);
+
+        await connection.query(itemQuery, [itemValues]);
+      }
+
+      return { success: true, newId: newEstimateId };
+    });
+
+  } catch (error) {
+    console.error("Save Estimate Error:", error);
+    return { success: false, error: error.message };
+  }
 }

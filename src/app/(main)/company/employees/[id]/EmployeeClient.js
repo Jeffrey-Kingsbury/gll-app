@@ -7,7 +7,8 @@ import {
     Mail, Phone, Calendar, Shield, DollarSign, FileText, Trash2
 } from "lucide-react";
 
-export default function EmployeeClient({ employee }) {
+export default function EmployeeClient({ employee, accessLevelOptions }) {
+    const accessLevels = accessLevelOptions || [];
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isEditing, setIsEditing] = useState(searchParams.get("edit") === "true");
@@ -118,13 +119,13 @@ export default function EmployeeClient({ employee }) {
                             <label className="text-xs font-bold text-stone-400">Access Level</label>
                             {isEditing ? (
                                 <select name="level_access" defaultValue={employee.level_access} className="w-full p-2.5 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-stone-800 dark:text-stone-200">
-                                    <option value="1">Standard Employee</option>
-                                    <option value="2">Manager</option>
-                                    <option value="3">Administrator</option>
+                                    {accessLevels.map(level => (
+                                        <option key={level.internalid} value={level.internalid}>{level.access_level_name}</option>
+                                    ))}
                                 </select>
                             ) : (
                                 <div className="py-1 font-medium text-stone-700 dark:text-stone-300">
-                                    {employee.level_access == 3 ? 'Administrator' : employee.level_access == 2 ? 'Manager' : 'Standard'}
+                                    {accessLevels.find(l => l.internalid == employee.level_access)?.access_level_name || "Unknown Role"}
                                 </div>
                             )}
                         </div>

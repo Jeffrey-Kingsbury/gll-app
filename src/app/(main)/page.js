@@ -1,23 +1,23 @@
 // app/dashboard/page.js
 "use client";
 import { useSettings } from "../../context/SettingsContext";
-import { 
-  Plus, 
-  TrendingUp, 
-  Users, 
-  Clock, 
+import {
+  Plus,
+  TrendingUp,
+  Users,
+  Clock,
   FileText,
   Hammer,
   ArrowRight
 } from "lucide-react";
-import { 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  AreaChart, 
-  Area 
+import {
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area
 } from 'recharts';
 
 // --- Mock Data ---
@@ -37,77 +37,87 @@ const recentProjects = [
   { id: 3, name: "Basement Finishing", status: "Completed", client: "Sarah Parker", budget: "$28,500" },
 ];
 
+import { createAuthClient } from "better-auth/client"; // Import Client
+const authClient = createAuthClient(); // Initialize
+const handleGoogleLogin = async () => {
+  setIsLoading(true);
+  await authClient.signIn.social({
+    provider: "google",
+    callbackURL: "/" // Where to go after login
+  });
+};
+
 export default function DashboardPage() {
   const { t, darkMode } = useSettings();
 
   // Chart Colors - Stone/Amber Theme
   // Light: Amber-600 (#d97706) | Dark: Amber-400 (#fbbf24)
-  const chartColor = darkMode ? "#fbbf24" : "#d97706"; 
+  const chartColor = darkMode ? "#fbbf24" : "#d97706";
   const gridColor = darkMode ? "#44403c" : "#e7e5e4"; // Stone-700 vs Stone-200
   const textColor = darkMode ? "#a8a29e" : "#78716c"; // Stone-400 vs Stone-500
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      
+
       {/* 1. Quick Actions Row */}
       <div className="flex flex-wrap gap-4">
-        <ActionButton 
-          label={t.newProject || "New Project"} 
-          icon={<Hammer size={18} />} 
-          color="bg-stone-900 hover:bg-stone-800 text-[#eaddcf]" 
+        <ActionButton
+          label={t.newProject || "New Project"}
+          icon={<Hammer size={18} />}
+          color="bg-stone-900 hover:bg-stone-800 text-[#eaddcf]"
         />
-        <ActionButton 
-          label={t.newEstimate || "New Estimate"} 
-          icon={<Plus size={18} />} 
-          color="bg-amber-700 hover:bg-amber-600 text-white" 
+        <ActionButton
+          label={t.newEstimate || "New Estimate"}
+          icon={<Plus size={18} />}
+          color="bg-amber-700 hover:bg-amber-600 text-white"
         />
-        <ActionButton 
-          label={t.newQuote || "New Quote"} 
-          icon={<FileText size={18} />} 
-          color="bg-stone-600 hover:bg-stone-500 text-white" 
+        <ActionButton
+          label={t.newQuote || "New Quote"}
+          icon={<FileText size={18} />}
+          color="bg-stone-600 hover:bg-stone-500 text-white"
         />
-        <ActionButton 
-          label={t.logTime || "Log Time"} 
-          icon={<Clock size={18} />} 
-          color="bg-[#eaddcf] hover:bg-[#decbc0] text-stone-900" 
+        <ActionButton
+          label={t.logTime || "Log Time"}
+          icon={<Clock size={18} />}
+          color="bg-[#eaddcf] hover:bg-[#decbc0] text-stone-900"
         />
       </div>
 
       {/* 2. Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title={t.activeProjects || "Active Projects"} 
-          value="12" 
-          trend="+2 this month" 
+        <StatCard
+          title={t.activeProjects || "Active Projects"}
+          value="12"
+          trend="+2 this month"
           trendPositive={true}
-          icon={<Users className="text-stone-600 dark:text-stone-300" />} 
+          icon={<Users className="text-stone-600 dark:text-stone-300" />}
         />
-        <StatCard 
-          title={t.totalQuotes || "Total Quotes"} 
-          value="$1.2M" 
-          trend="8 pending" 
+        <StatCard
+          title={t.totalQuotes || "Total Quotes"}
+          value="$1.2M"
+          trend="8 pending"
           trendPositive={null} // Neutral
-          icon={<FileText className="text-amber-600 dark:text-amber-400" />} 
+          icon={<FileText className="text-amber-600 dark:text-amber-400" />}
         />
-        <StatCard 
-          title={t.hoursThisWeek || "Hours (Week)"} 
-          value="142.5" 
-          trend="On track" 
+        <StatCard
+          title={t.hoursThisWeek || "Hours (Week)"}
+          value="142.5"
+          trend="On track"
           trendPositive={true}
-          icon={<Clock className="text-stone-600 dark:text-stone-300" />} 
+          icon={<Clock className="text-stone-600 dark:text-stone-300" />}
         />
-        <StatCard 
-          title={t.revenue || "Revenue"} 
-          value="$84k" 
-          trend="+12% vs last mo" 
+        <StatCard
+          title={t.revenue || "Revenue"}
+          value="$84k"
+          trend="+12% vs last mo"
           trendPositive={true}
-          icon={<TrendingUp className="text-emerald-600 dark:text-emerald-400" />} 
+          icon={<TrendingUp className="text-emerald-600 dark:text-emerald-400" />}
         />
       </div>
 
       {/* 3. Charts & Activity Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
+
         {/* Main Chart */}
         <div className="lg:col-span-2 bg-white dark:bg-stone-900 p-6 rounded-xl shadow-sm border border-stone-200 dark:border-stone-800">
           <div className="flex justify-between items-center mb-6">
@@ -119,48 +129,48 @@ export default function DashboardPage() {
               <option>Last Week</option>
             </select>
           </div>
-          
+
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={data}>
                 <defs>
                   <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={chartColor} stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
+                    <stop offset="5%" stopColor={chartColor} stopOpacity={0.2} />
+                    <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
-                <XAxis 
-                  dataKey="name" 
-                  stroke={textColor} 
+                <XAxis
+                  dataKey="name"
+                  stroke={textColor}
                   axisLine={false}
                   tickLine={false}
                   dy={10}
                   fontSize={12}
                 />
-                <YAxis 
-                  stroke={textColor} 
+                <YAxis
+                  stroke={textColor}
                   axisLine={false}
                   tickLine={false}
                   dx={-10}
                   fontSize={12}
                 />
-                <Tooltip 
-                  contentStyle={{ 
+                <Tooltip
+                  contentStyle={{
                     backgroundColor: darkMode ? '#1c1917' : '#fff', // stone-900 vs white
-                    borderRadius: '8px', 
+                    borderRadius: '8px',
                     border: '1px solid ' + (darkMode ? '#44403c' : '#e7e5e4'),
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' 
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                   }}
                   itemStyle={{ color: darkMode ? '#eaddcf' : '#1c1917', fontSize: '12px' }}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="hours" 
-                  stroke={chartColor} 
+                <Area
+                  type="monotone"
+                  dataKey="hours"
+                  stroke={chartColor}
                   strokeWidth={2}
-                  fillOpacity={1} 
-                  fill="url(#colorHours)" 
+                  fillOpacity={1}
+                  fill="url(#colorHours)"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -177,7 +187,7 @@ export default function DashboardPage() {
               <ArrowRight size={20} />
             </button>
           </div>
-          
+
           <div className="space-y-6">
             {recentProjects.map((project) => (
               <div key={project.id} className="flex flex-col pb-4 border-b border-stone-100 dark:border-stone-800 last:border-0 last:pb-0 group">
@@ -226,11 +236,10 @@ function StatCard({ title, value, trend, trendPositive, icon }) {
       <div className="text-3xl font-bold text-stone-900 dark:text-[#eaddcf] mb-1 font-serif">
         {value}
       </div>
-      <div className={`text-xs font-medium flex items-center gap-1 ${
-        trendPositive === true ? "text-emerald-600" : 
-        trendPositive === false ? "text-red-500" : 
-        "text-stone-500"
-      }`}>
+      <div className={`text-xs font-medium flex items-center gap-1 ${trendPositive === true ? "text-emerald-600" :
+        trendPositive === false ? "text-red-500" :
+          "text-stone-500"
+        }`}>
         {trendPositive === true && <TrendingUp size={12} />}
         {trend}
       </div>
@@ -244,7 +253,7 @@ function StatusPill({ status }) {
     Pending: "bg-stone-100 text-stone-600 border-stone-200 dark:bg-stone-800 dark:text-stone-400 dark:border-stone-700",
     Completed: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800",
   };
-  
+
   return (
     <span className={`px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold border ${styles[status] || styles.Pending}`}>
       {status}
