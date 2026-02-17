@@ -94,14 +94,16 @@ export default function ProjectsPage() {
                         <div key={project.internalid} className="bg-white dark:bg-[#1c1917] border border-stone-200 dark:border-stone-800 rounded-xl p-6 shadow-sm hover:shadow-md transition-all group relative">
                             <div className="flex justify-between items-start mb-4">
                                 <div className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider ${project.status === 'Active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                                        project.status === 'Completed' ? 'bg-stone-100 text-stone-500' : 'bg-amber-100 text-amber-700'
+                                    project.status === 'Completed' ? 'bg-stone-100 text-stone-500' : 'bg-amber-100 text-amber-700'
                                     }`}>
                                     {project.status}
                                 </div>
                                 <button onClick={() => handleDelete(project.internalid)} className="text-stone-300 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
                             </div>
 
-                            <h3 className="text-xl font-bold text-stone-800 dark:text-white mb-1 group-hover:text-amber-600 transition-colors">{project.name}</h3>
+                            <Link href={`/projects/${project.internalid}`} className="block group-hover:text-amber-600 transition-colors">
+                                <h3 className="text-xl font-bold text-stone-800 dark:text-white mb-1">{project.name}</h3>
+                            </Link>
 
                             <div className="flex items-center gap-2 text-stone-500 text-sm mb-6">
                                 <Users size={14} />

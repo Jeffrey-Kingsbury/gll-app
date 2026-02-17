@@ -135,7 +135,8 @@ export async function getEstimatesAction({
   sortCol = 'internalid',
   sortDir = 'desc',
   page = 1,
-  limit = 50
+  limit = 50,
+  projectId = null
 } = {}) {
 
   const validCols = ['internalid', 'project_name', 'client_name', 'date', 'grand_total', 'status'];
@@ -155,15 +156,29 @@ export async function getEstimatesAction({
   try {
     const limitVal = parseInt(limit) || 50;
     const offsetVal = parseInt(offset) || 0;
+
+    let whereClause = "";
+    const params = [];
+
+    if (projectId) {
+      whereClause = "WHERE project_id = ?";
+      params.push(projectId);
+    }
+
+    // Add limit/offset to params
+    params.push(limitVal, offsetVal);
+
     const dataQuery = `
       SELECT * FROM estimates 
+      ${whereClause}
       ORDER BY ${column} ${direction} 
       LIMIT ? OFFSET ?
     `;
-    const data = await mysql_executeQueryReadOnly(dataQuery, [limitVal, offsetVal]);
+    const data = await mysql_executeQueryReadOnly(dataQuery, params);
 
-    const countQuery = `SELECT COUNT(*) as total FROM estimates`;
-    const countResult = await mysql_executeQueryReadOnly(countQuery);
+    // Count query needs same WHERE
+    const countQuery = `SELECT COUNT(*) as total FROM estimates ${whereClause}`;
+    const countResult = await mysql_executeQueryReadOnly(countQuery, projectId ? [projectId] : []);
     const totalCount = countResult[0].total;
 
     return {

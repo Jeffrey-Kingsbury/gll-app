@@ -43,6 +43,7 @@ export async function mysql_getDatabaseSchema() {
             SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE 
             FROM INFORMATION_SCHEMA.COLUMNS 
             WHERE TABLE_SCHEMA = ? 
+            AND TABLE_NAME NOT LIKE 'sys_%'
             ORDER BY TABLE_NAME, ORDINAL_POSITION
         `;
         // We use the readOnlyPool for safety

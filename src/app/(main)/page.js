@@ -1,205 +1,237 @@
-// app/dashboard/page.js
 "use client";
-import { useSettings } from "../../context/SettingsContext";
+
+import { useState, useEffect } from "react";
+import { useSettings } from "@/context/SettingsContext"; // Ensure path is correct
 import {
-  Plus,
-  TrendingUp,
-  Users,
-  Clock,
-  FileText,
-  Hammer,
-  ArrowRight
+  Plus, TrendingUp, Users, Clock, FileText, Hammer, ArrowRight,
+  BarChart2, Calendar, Filter
 } from "lucide-react";
 import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  AreaChart, Area, BarChart, Bar, Legend
 } from 'recharts';
-
-// --- Mock Data ---
-const data = [
-  { name: 'Mon', hours: 4, active: 2 },
-  { name: 'Tue', hours: 7, active: 3 },
-  { name: 'Wed', hours: 5, active: 3 },
-  { name: 'Thu', hours: 8, active: 4 },
-  { name: 'Fri', hours: 6, active: 4 },
-  { name: 'Sat', hours: 3, active: 2 },
-  { name: 'Sun', hours: 0, active: 1 },
-];
-
-const recentProjects = [
-  { id: 1, name: "Kitchen Reno - Smith Residence", status: "Active", client: "John Smith", budget: "$45,000" },
-  { id: 2, name: "Downtown Office Fit-out", status: "Pending", client: "TechCorp Inc.", budget: "$120,000" },
-  { id: 3, name: "Basement Finishing", status: "Completed", client: "Sarah Parker", budget: "$28,500" },
-];
-
-import { createAuthClient } from "better-auth/client"; // Import Client
-const authClient = createAuthClient(); // Initialize
-const handleGoogleLogin = async () => {
-  setIsLoading(true);
-  await authClient.signIn.social({
-    provider: "google",
-    callbackURL: "/" // Where to go after login
-  });
-};
+import { getDashboardStatsAction, getCustomChartDataAction } from "./actions";
 
 export default function DashboardPage() {
   const { t, darkMode } = useSettings();
+  const [stats, setStats] = useState({
+    activeProjects: 0,
+    totalEstimates: 0,
+    hoursWeek: 0,
+    revenueMonth: 0,
+    recentProjects: []
+  });
+  const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Chart Colors - Stone/Amber Theme
-  // Light: Amber-600 (#d97706) | Dark: Amber-400 (#fbbf24)
-  const chartColor = darkMode ? "#fbbf24" : "#d97706";
-  const gridColor = darkMode ? "#44403c" : "#e7e5e4"; // Stone-700 vs Stone-200
-  const textColor = darkMode ? "#a8a29e" : "#78716c"; // Stone-400 vs Stone-500
+  // --- Custom Chart State ---
+  const [chartConfig, setChartConfig] = useState({
+    metric: "hours", // hours, revenue, projects
+    groupBy: "day", // day, week, month, project, employee
+    startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0], // Last 30 days
+    endDate: new Date().toISOString().split('T')[0]
+  });
+
+  // --- 1. Load Initial Stats ---
+  useEffect(() => {
+    async function loadStats() {
+      const data = await getDashboardStatsAction();
+      setStats(data);
+      setLoading(false);
+    }
+    loadStats();
+  }, []);
+
+  // --- 2. Load Chart Data (When config changes) ---
+  useEffect(() => {
+    async function loadChart() {
+      const data = await getCustomChartDataAction(chartConfig);
+      setChartData(data);
+    }
+    loadChart();
+  }, [chartConfig]);
+
+  // --- Theme Colors ---
+  const chartColor = darkMode ? "#fbbf24" : "#d97706"; // Amber
+  const gridColor = darkMode ? "#44403c" : "#e7e5e4";
+  const textColor = darkMode ? "#a8a29e" : "#78716c";
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
       {/* 1. Quick Actions Row */}
       <div className="flex flex-wrap gap-4">
-        <ActionButton
-          label={t.newProject || "New Project"}
-          icon={<Hammer size={18} />}
-          color="bg-stone-900 hover:bg-stone-800 text-[#eaddcf]"
-        />
-        <ActionButton
-          label={t.newEstimate || "New Estimate"}
-          icon={<Plus size={18} />}
-          color="bg-amber-700 hover:bg-amber-600 text-white"
-        />
-        <ActionButton
-          label={t.newQuote || "New Quote"}
-          icon={<FileText size={18} />}
-          color="bg-stone-600 hover:bg-stone-500 text-white"
-        />
-        <ActionButton
-          label={t.logTime || "Log Time"}
-          icon={<Clock size={18} />}
-          color="bg-[#eaddcf] hover:bg-[#decbc0] text-stone-900"
-        />
+        <ActionButton label="New Project" icon={<Hammer size={18} />} color="bg-stone-900 dark:bg-stone-800 text-[#eaddcf] dark:text-amber-500" />
+        <ActionButton label="New Estimate" icon={<Plus size={18} />} color="bg-amber-700 hover:bg-amber-600 text-white" />
+        <ActionButton label="New Quote" icon={<FileText size={18} />} color="bg-stone-600 hover:bg-stone-500 text-white" />
+        <ActionButton label="Log Time" icon={<Clock size={18} />} color="bg-[#eaddcf] hover:bg-[#decbc0] text-stone-900" />
       </div>
 
       {/* 2. Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title={t.activeProjects || "Active Projects"}
-          value="12"
-          trend="+2 this month"
-          trendPositive={true}
+          title="Active Projects"
+          value={stats.activeProjects}
           icon={<Users className="text-stone-600 dark:text-stone-300" />}
         />
         <StatCard
-          title={t.totalQuotes || "Total Quotes"}
-          value="$1.2M"
-          trend="8 pending"
-          trendPositive={null} // Neutral
+          title="Total Estimates"
+          value={`$${stats.totalEstimates.toLocaleString()}`}
           icon={<FileText className="text-amber-600 dark:text-amber-400" />}
         />
         <StatCard
-          title={t.hoursThisWeek || "Hours (Week)"}
-          value="142.5"
-          trend="On track"
-          trendPositive={true}
+          title="Hours (This Week)"
+          value={stats.hoursWeek}
           icon={<Clock className="text-stone-600 dark:text-stone-300" />}
         />
         <StatCard
-          title={t.revenue || "Revenue"}
-          value="$84k"
-          trend="+12% vs last mo"
-          trendPositive={true}
+          title="Revenue (Month)"
+          value={`$${stats.revenueMonth.toLocaleString()}`}
           icon={<TrendingUp className="text-emerald-600 dark:text-emerald-400" />}
         />
       </div>
 
-      {/* 3. Charts & Activity Section */}
+      {/* 3. Custom Analytics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Main Chart */}
+        {/* Main Chart Card */}
         <div className="lg:col-span-2 bg-white dark:bg-stone-900 p-6 rounded-xl shadow-sm border border-stone-200 dark:border-stone-800">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-stone-900 dark:text-[#eaddcf] font-serif">
-              Weekly Productivity
+
+          {/* Chart Controls */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-stone-100 dark:border-stone-800 pb-4">
+            <h3 className="text-lg font-bold text-stone-900 dark:text-[#eaddcf] font-serif flex items-center gap-2">
+              <BarChart2 size={20} className="text-amber-600" />
+              Custom Analytics
             </h3>
-            <select className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 text-sm rounded-lg px-2 py-1 outline-none">
-              <option>This Week</option>
-              <option>Last Week</option>
-            </select>
+
+            <div className="flex flex-wrap gap-2">
+              {/* Metric Selector */}
+              <select
+                value={chartConfig.metric}
+                onChange={(e) => setChartConfig({ ...chartConfig, metric: e.target.value })}
+                className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500/50"
+              >
+                <option value="hours">Hours Logged</option>
+                <option value="revenue">Estimate Revenue</option>
+                <option value="projects">Projects Created</option>
+              </select>
+
+              {/* Group By Selector */}
+              <select
+                value={chartConfig.groupBy}
+                onChange={(e) => setChartConfig({ ...chartConfig, groupBy: e.target.value })}
+                className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500/50"
+              >
+                <option value="day">By Day</option>
+                <option value="week">By Week</option>
+                <option value="month">By Month</option>
+                <option value="project">By Project</option>
+                <option value="employee">By Employee</option>
+              </select>
+
+              {/* Date Range (Simple Last 30 Days toggle for demo, or date inputs) */}
+              <div className="flex items-center gap-2 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2">
+                <Calendar size={14} className="text-stone-400" />
+                <input
+                  type="date"
+                  value={chartConfig.startDate}
+                  onChange={(e) => setChartConfig({ ...chartConfig, startDate: e.target.value })}
+                  className="bg-transparent text-xs text-stone-600 dark:text-stone-300 outline-none w-24"
+                />
+                <span className="text-stone-400">-</span>
+                <input
+                  type="date"
+                  value={chartConfig.endDate}
+                  onChange={(e) => setChartConfig({ ...chartConfig, endDate: e.target.value })}
+                  className="bg-transparent text-xs text-stone-600 dark:text-stone-300 outline-none w-24"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data}>
-                <defs>
-                  <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={chartColor} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
-                <XAxis
-                  dataKey="name"
-                  stroke={textColor}
-                  axisLine={false}
-                  tickLine={false}
-                  dy={10}
-                  fontSize={12}
-                />
-                <YAxis
-                  stroke={textColor}
-                  axisLine={false}
-                  tickLine={false}
-                  dx={-10}
-                  fontSize={12}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: darkMode ? '#1c1917' : '#fff', // stone-900 vs white
-                    borderRadius: '8px',
-                    border: '1px solid ' + (darkMode ? '#44403c' : '#e7e5e4'),
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                  }}
-                  itemStyle={{ color: darkMode ? '#eaddcf' : '#1c1917', fontSize: '12px' }}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="hours"
-                  stroke={chartColor}
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorHours)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          {/* Chart Display */}
+          <div className="h-[350px] w-full">
+            {chartData.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-stone-400">
+                <BarChart2 size={48} className="mb-4 opacity-20" />
+                <p>No data found for this selection.</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={chartColor} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+                  <XAxis
+                    dataKey="name"
+                    stroke={textColor}
+                    axisLine={false}
+                    tickLine={false}
+                    dy={10}
+                    fontSize={11}
+                    tickFormatter={(val) => val.length > 15 ? val.substring(0, 15) + '...' : val}
+                  />
+                  <YAxis
+                    stroke={textColor}
+                    axisLine={false}
+                    tickLine={false}
+                    dx={-10}
+                    fontSize={11}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: darkMode ? '#1c1917' : '#fff',
+                      borderRadius: '8px',
+                      border: `1px solid ${darkMode ? '#44403c' : '#e7e5e4'}`,
+                      boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                    }}
+                    itemStyle={{ color: darkMode ? '#eaddcf' : '#1c1917', fontSize: '12px', fontWeight: 'bold' }}
+                    labelStyle={{ color: textColor, marginBottom: '0.5rem', fontSize: '11px' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="value"
+                    stroke={chartColor}
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorValue)"
+                    name={chartConfig.metric === 'revenue' ? 'Revenue ($)' : chartConfig.metric === 'hours' ? 'Hours' : 'Count'}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
         {/* Recent Activity List */}
-        <div className="bg-white dark:bg-stone-900 p-6 rounded-xl shadow-sm border border-stone-200 dark:border-stone-800">
+        <div className="bg-white dark:bg-stone-900 p-6 rounded-xl shadow-sm border border-stone-200 dark:border-stone-800 flex flex-col h-full">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-bold text-stone-900 dark:text-[#eaddcf] font-serif">
-              {t.recentActivity || "Recent Projects"}
+              Recent Projects
             </h3>
             <button className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors">
               <ArrowRight size={20} />
             </button>
           </div>
 
-          <div className="space-y-6">
-            {recentProjects.map((project) => (
-              <div key={project.id} className="flex flex-col pb-4 border-b border-stone-100 dark:border-stone-800 last:border-0 last:pb-0 group">
+          <div className="space-y-6 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+            {stats.recentProjects.length === 0 ? (
+              <p className="text-stone-400 text-sm italic">No recent activity.</p>
+            ) : stats.recentProjects.map((project) => (
+              <div key={project.internalid} className="flex flex-col pb-4 border-b border-stone-100 dark:border-stone-800 last:border-0 last:pb-0 group">
                 <div className="flex justify-between items-start">
                   <span className="font-semibold text-stone-800 dark:text-stone-200 text-sm group-hover:text-amber-600 transition-colors cursor-pointer">
                     {project.name}
                   </span>
                   <span className="text-xs font-mono text-stone-500 dark:text-stone-400">
-                    {project.budget}
+                    ${parseFloat(project.budget || 0).toLocaleString()}
                   </span>
                 </div>
-                <span className="text-xs text-stone-500 mt-1">{project.client}</span>
+                <span className="text-xs text-stone-500 mt-1">{project.client_name || "Unknown Client"}</span>
                 <div className="mt-2">
                   <StatusPill status={project.status} />
                 </div>
@@ -213,7 +245,7 @@ export default function DashboardPage() {
   );
 }
 
-// --- Helper Components ---
+// --- Components ---
 
 function ActionButton({ label, icon, color }) {
   return (
@@ -224,24 +256,17 @@ function ActionButton({ label, icon, color }) {
   );
 }
 
-function StatCard({ title, value, trend, trendPositive, icon }) {
+function StatCard({ title, value, icon }) {
   return (
     <div className="bg-white dark:bg-stone-900 p-6 rounded-xl shadow-sm border border-stone-200 dark:border-stone-800 transition hover:border-amber-500/30">
       <div className="flex items-center justify-between mb-4">
-        <span className="text-sm font-semibold text-stone-500 uppercase tracking-wide">{title}</span>
+        <span className="text-xs font-bold text-stone-500 uppercase tracking-widest">{title}</span>
         <div className="p-2 bg-stone-50 dark:bg-stone-800 rounded-lg">
           {icon}
         </div>
       </div>
       <div className="text-3xl font-bold text-stone-900 dark:text-[#eaddcf] mb-1 font-serif">
         {value}
-      </div>
-      <div className={`text-xs font-medium flex items-center gap-1 ${trendPositive === true ? "text-emerald-600" :
-        trendPositive === false ? "text-red-500" :
-          "text-stone-500"
-        }`}>
-        {trendPositive === true && <TrendingUp size={12} />}
-        {trend}
       </div>
     </div>
   );
@@ -252,6 +277,7 @@ function StatusPill({ status }) {
     Active: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800",
     Pending: "bg-stone-100 text-stone-600 border-stone-200 dark:bg-stone-800 dark:text-stone-400 dark:border-stone-700",
     Completed: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800",
+    Planning: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800",
   };
 
   return (

@@ -136,7 +136,7 @@ export default function MainLayout({ children }) {
               <div className="my-4 border-t border-stone-800/50 mx-2"></div>
 
               {/* Company Setup Toggle */}
-              {employee.accessLevel != 3 && (
+              {employee && employee.accessLevel != 3 && (
                 <button onClick={() => setSidebarMode("company")} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group hover:bg-stone-800 hover:text-white ${pathname.includes("/company") ? "text-amber-500 font-medium" : "text-stone-300"}`}>
                   <div className="flex items-center gap-3">
                     <Building2 size={20} className="text-stone-500 group-hover:text-amber-500 transition-colors" />
@@ -145,7 +145,7 @@ export default function MainLayout({ children }) {
                   <ChevronLeft size={16} className="rotate-180 text-stone-600 group-hover:text-stone-400" />
                 </button>
               )}
-              {employee.accessLevel != 3 && (
+              {employee && employee.accessLevel != 3 && (
                 <button onClick={() => setSidebarMode("customizations")} className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group hover:bg-stone-800 hover:text-white ${pathname.includes("/customizations") ? "text-amber-500 font-medium" : "text-stone-300"}`}>
                   <div className="flex items-center gap-3">
                     <Sliders size={20} className="text-stone-500 group-hover:text-amber-500 transition-colors" />

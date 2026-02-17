@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { executeQueryAction, getSchemaAction } from "./actions";
-import { 
-    Play, 
-    Database, 
-    ChevronRight, 
-    ChevronDown, 
-    Table, 
+import {
+    Play,
+    Database,
+    ChevronRight,
+    ChevronDown,
+    Table,
     Columns,
     RefreshCw,
     AlertCircle,
@@ -21,10 +21,10 @@ export default function SqlClient() {
     const [results, setResults] = useState(null);
     const [error, setError] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    
+
     // Copy Feedback State
     const [isCopied, setIsCopied] = useState(false);
-    
+
     // Schema State
     const [schema, setSchema] = useState({});
     const [expandedTables, setExpandedTables] = useState({});
@@ -49,7 +49,7 @@ export default function SqlClient() {
         setResults(null);
 
         const res = await executeQueryAction(query);
-        
+
         if (res.success) {
             setResults(res.data);
         } else {
@@ -64,7 +64,7 @@ export default function SqlClient() {
 
         // 1. Get Headers
         const headers = Object.keys(results[0]);
-        
+
         // 2. Build CSV Content
         const csvRows = [];
         csvRows.push(headers.join(",")); // Header Row
@@ -108,7 +108,7 @@ export default function SqlClient() {
         }
 
         navigator.clipboard.writeText(tsvRows.join("\n"));
-        
+
         // Show "Copied!" feedback
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
@@ -123,17 +123,17 @@ export default function SqlClient() {
 
     return (
         <div className="flex h-[calc(100vh-100px)] gap-6 animate-in fade-in pb-4">
-            
+
             {/* --- LEFT: QUERY EDITOR & RESULTS --- */}
             <div className="flex-1 flex flex-col gap-4 min-w-0">
-                
+
                 {/* Editor Card */}
                 <div className="bg-white dark:bg-[#1c1917] rounded-xl border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col h-1/3 min-h-[200px]">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/50 rounded-t-xl">
                         <div className="flex items-center gap-2 text-sm font-bold text-stone-600 dark:text-stone-300">
                             <Database size={16} /> SQL Editor
                         </div>
-                        <button 
+                        <button
                             onClick={handleExecute}
                             disabled={isLoading}
                             className="flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 active:scale-95 shadow-sm"
@@ -142,7 +142,7 @@ export default function SqlClient() {
                             EXECUTE
                         </button>
                     </div>
-                    <textarea 
+                    <textarea
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         className="flex-1 w-full p-4 bg-transparent font-mono text-sm text-stone-800 dark:text-stone-200 outline-none resize-none placeholder:text-stone-400"
@@ -166,12 +166,12 @@ export default function SqlClient() {
                         </div>
                     ) : (
                         <>
-                           {/* --- RESULTS TOOLBAR --- */}
-                           <div className="px-4 py-2 bg-stone-50 dark:bg-stone-900/50 border-b border-stone-200 dark:border-stone-800 text-xs text-stone-500 flex justify-between items-center">
+                            {/* --- RESULTS TOOLBAR --- */}
+                            <div className="px-4 py-2 bg-stone-50 dark:bg-stone-900/50 border-b border-stone-200 dark:border-stone-800 text-xs text-stone-500 flex justify-between items-center">
                                 <span className="font-mono">{results.length} rows returned</span>
-                                
+
                                 <div className="flex items-center gap-2">
-                                    <button 
+                                    <button
                                         onClick={handleCopyClipboard}
                                         className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-stone-200 dark:hover:bg-stone-800 rounded-md transition-colors text-stone-600 dark:text-stone-400"
                                         title="Copy to Clipboard"
@@ -181,10 +181,10 @@ export default function SqlClient() {
                                             {isCopied ? "Copied" : "Copy"}
                                         </span>
                                     </button>
-                                    
+
                                     <div className="h-4 w-px bg-stone-300 dark:bg-stone-700"></div>
 
-                                    <button 
+                                    <button
                                         onClick={handleExportCSV}
                                         className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-stone-200 dark:hover:bg-stone-800 rounded-md transition-colors text-stone-600 dark:text-stone-400"
                                         title="Download CSV"
@@ -193,10 +193,10 @@ export default function SqlClient() {
                                         <span>Export CSV</span>
                                     </button>
                                 </div>
-                           </div>
+                            </div>
 
-                           {/* Table */}
-                           <div className="flex-1 overflow-auto">
+                            {/* Table */}
+                            <div className="flex-1 overflow-auto">
                                 <table className="w-full text-left text-xs text-stone-600 dark:text-stone-300 whitespace-nowrap">
                                     <thead className="bg-stone-100 dark:bg-stone-800 sticky top-0 z-10 shadow-sm">
                                         <tr>
@@ -219,7 +219,7 @@ export default function SqlClient() {
                                         ))}
                                     </tbody>
                                 </table>
-                           </div>
+                            </div>
                         </>
                     )}
                 </div>
@@ -233,15 +233,15 @@ export default function SqlClient() {
                         <RefreshCw size={12} className={isSchemaLoading ? "animate-spin" : ""} />
                     </button>
                 </div>
-                
+
                 <div className="flex-1 overflow-y-auto p-2 space-y-1">
                     {Object.keys(schema).length === 0 && !isSchemaLoading && (
                         <div className="p-4 text-center text-xs text-stone-400">No tables found</div>
                     )}
-                    
+
                     {Object.keys(schema).map((tableName) => (
                         <div key={tableName} className="rounded-lg overflow-hidden">
-                            <button 
+                            <button
                                 onClick={() => toggleTable(tableName)}
                                 className="w-full flex items-center gap-2 px-2 py-1.5 text-xs font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors text-left select-none"
                             >
@@ -249,7 +249,7 @@ export default function SqlClient() {
                                 <Table size={14} className="text-amber-600 shrink-0" />
                                 <span className="truncate" title={tableName}>{tableName}</span>
                             </button>
-                            
+
                             {/* Columns List */}
                             {expandedTables[tableName] && (
                                 <div className="pl-7 pr-2 py-1 space-y-1 bg-stone-50 dark:bg-stone-900/30 animate-in slide-in-from-top-1 duration-200">
@@ -257,7 +257,7 @@ export default function SqlClient() {
                                         <div key={col.name} className="flex items-center justify-between text-[10px] text-stone-500 group hover:text-stone-800 dark:hover:text-stone-200 cursor-default">
                                             <div className="flex items-center gap-1.5 overflow-hidden">
                                                 <Columns size={10} className="shrink-0" />
-                                                <span className="font-mono truncate" title={col.name}>{col.name}</span>
+                                                <span className="font-mono truncate" onClick={() => setQuery(prev => `${prev}${prev.endsWith(' ') ? '' : ' '}${col.name}`)} title={col.name}>{col.name}</span>
                                             </div>
                                             <span className="opacity-50 uppercase text-[9px] shrink-0 ml-2">{col.type}</span>
                                         </div>
