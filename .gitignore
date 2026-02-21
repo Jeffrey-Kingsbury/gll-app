@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+./public/system/img/time_entry_img/*
+./public/system/img/tmp/img/*
+./public/uploads/*
