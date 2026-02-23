@@ -19,14 +19,14 @@ export default function ProjectTabs({ project }) {
     return (
         <div>
             {/* Tab Header */}
-            <div className="flex items-center gap-1 border-b border-stone-200 dark:border-stone-800 mb-6 overflow-x-auto">
+            <div className="flex items-center gap-1 border-b border-stone-800 mb-6 overflow-x-auto">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
                         className={`px-4 py-3 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
-                                ? "border-amber-600 text-amber-600"
-                                : "border-transparent text-stone-500 hover:text-stone-800 dark:hover:text-stone-300"
+                            ? "border-amber-600 text-amber-600"
+                            : "border-transparent text-stone-500 hover:text-stone-800 hover:text-stone-300"
                             }`}
                     >
                         {tab.label}

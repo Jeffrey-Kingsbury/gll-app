@@ -275,7 +275,7 @@ export async function mysql_deleteCustomer(id) {
 
 export async function mysql_getProjects() {
     try {
-        const [rows] = await pool.execute("SELECT internalid, name, client_name FROM projects ORDER BY name ASC");
+        const [rows] = await pool.execute("SELECT * FROM projects ORDER BY name ASC");
         return rows;
     } catch (error) {
         return [];

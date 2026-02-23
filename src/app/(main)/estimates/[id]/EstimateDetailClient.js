@@ -5,14 +5,15 @@ import { useRouter } from "next/navigation";
 import {
     ArrowLeft, Pencil, Printer, Save, Trash2, X,
     Briefcase, LayoutTemplate, User, DollarSign,
-    Calculator, Plus, ChevronDown, Check
+    Calculator, Plus, ChevronDown, Check, CheckCircle
 } from "lucide-react";
-import { updateEstimateAction } from "../actions";
+import { updateEstimateAction, approveEstimateAction } from "../actions";
 
 export default function EstimateDetailClient({ estimate, projects, templates, initialIsEditing }) {
     const router = useRouter();
     const [isEditing, setIsEditing] = useState(initialIsEditing);
     const [isSaving, setIsSaving] = useState(false);
+    const [isApproving, setIsApproving] = useState(false);
 
     // --- FORM STATE (Initialized with DB Data) ---
     const [lineItems, setLineItems] = useState(estimate.items || []);
@@ -50,9 +51,6 @@ export default function EstimateDetailClient({ estimate, projects, templates, in
     // --- HANDLERS (Editor Logic) ---
     const handleUpdateItem = (index, field, value) => {
         const newItems = [...lineItems];
-        // Normalize field names (DB uses _cost, UI uses simple names. Let's stick to UI names for state)
-        // If we receive data from DB, we map it to state. 
-        // Ideally, we should normalize the initial state to use 'labor' and 'material' keys everywhere.
         newItems[index][field] = value;
         setLineItems(newItems);
     };
@@ -60,7 +58,6 @@ export default function EstimateDetailClient({ estimate, projects, templates, in
     const handleSave = async () => {
         setIsSaving(true);
 
-        // Normalize items for API
         const apiItems = lineItems.map(i => ({
             ...i,
             labor: Number(i.labor_cost || i.labor || 0),
@@ -91,13 +88,34 @@ export default function EstimateDetailClient({ estimate, projects, templates, in
         const total = (parseFloat(calcValues.count) || 0) * (parseFloat(calcValues.hours) || 0) * (parseFloat(calcValues.rate) || 0);
 
         const newItems = [...lineItems];
-        // Support both key styles just in case
         newItems[calcModal.targetIndex].labor = total;
         newItems[calcModal.targetIndex].labor_cost = total;
         setLineItems(newItems);
 
         setCalcModal({ isOpen: false, targetIndex: null });
     };
+
+    // --- HANDLER (Approve & Generate Budget) ---
+    async function handleApprove() {
+        if (!estimate.project_id) {
+            alert("You must link this estimate to a Project before approving it.");
+            return;
+        }
+
+        if (!confirm("Approve this estimate? This will lock it and generate the project expense report (budget).")) return;
+
+        setIsApproving(true);
+        const res = await approveEstimateAction(estimate.internalid);
+
+        if (res.success) {
+            // Update local state to reflect the change immediately before the full server refresh
+            setMeta(prev => ({ ...prev, status: 'Approved' }));
+            router.refresh();
+        } else {
+            alert("Error: " + res.error);
+        }
+        setIsApproving(false);
+    }
 
     // --- VIEW MODE RENDERER ---
     if (!isEditing) {
@@ -112,9 +130,32 @@ export default function EstimateDetailClient({ estimate, projects, templates, in
                         <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded-xl font-medium transition-colors">
                             <Printer size={18} /> Print
                         </button>
-                        <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-6 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold shadow-lg shadow-amber-900/20 transition-all">
-                            <Pencil size={18} /> Edit Estimate
-                        </button>
+
+                        {/* THE NEW APPROVE BUTTON (Only shows if NOT approved) */}
+                        {meta.status !== 'Approved' && (
+                            <button
+                                onClick={handleApprove}
+                                disabled={isApproving}
+                                className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-900/20 transition-all active:scale-95 disabled:opacity-70"
+                            >
+                                <CheckCircle size={18} />
+                                {isApproving ? "Generating..." : "Approve & Generate Budget"}
+                            </button>
+                        )}
+
+                        {/* Edit Button (Hidden if Approved) */}
+                        {meta.status !== 'Approved' && (
+                            <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-6 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-xl font-bold shadow-lg shadow-amber-900/20 transition-all">
+                                <Pencil size={18} /> Edit Estimate
+                            </button>
+                        )}
+
+                        {/* Locked Badge (Shows if Approved) */}
+                        {meta.status === 'Approved' && (
+                            <div className="flex items-center gap-2 bg-green-100 text-green-700 px-6 py-2 rounded-xl font-bold border border-green-200">
+                                <CheckCircle size={18} /> Approved & Locked
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -131,8 +172,8 @@ export default function EstimateDetailClient({ estimate, projects, templates, in
                             <p className="text-stone-500">{meta.clientName}</p>
                             <p className="text-stone-400 text-sm mt-1">{new Date(estimate.date).toLocaleDateString()}</p>
                             <div className={`mt-2 inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wide border ${meta.status === 'Sent' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                                    meta.status === 'Approved' ? 'bg-green-50 text-green-600 border-green-200' :
-                                        'bg-stone-100 text-stone-500 border-stone-200'
+                                meta.status === 'Approved' ? 'bg-green-50 text-green-600 border-green-200' :
+                                    'bg-stone-100 text-stone-500 border-stone-200'
                                 }`}>
                                 {meta.status}
                             </div>
@@ -277,7 +318,7 @@ export default function EstimateDetailClient({ estimate, projects, templates, in
             {/* Editor Tables (Simplified for brevity, assumes reused components or inline mapping) */}
             <div className="space-y-6">
                 {Object.keys(groupedItems).map(category => (
-                    <div key={category} className="bg-white dark:bg-[#1c1917] border border-stone-800 rounded-xl overflow-hidden">
+                    <div key={category} className="bg-[#1c1917] border border-stone-800 rounded-xl overflow-hidden">
                         <div className="p-4 bg-stone-900/50 flex justify-between items-center">
                             <h3 className="font-bold text-stone-200">{category}</h3>
                             <button onClick={() => {

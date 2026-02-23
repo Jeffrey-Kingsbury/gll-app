@@ -145,41 +145,41 @@ export default function CustomerClient({ customer, allImages = [] }) {
             >
               <X size={16} /> Cancel
             </button>
-            
+
           ) : (
             <button
               onClick={() => window.location.href = "?edit=true"}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-bold bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:border-amber-500 hover:text-amber-600 rounded-lg transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-bold bg-stone-800 border border-stone-700 text-stone-300 hover:border-amber-500 hover:text-amber-600 rounded-lg transition-all shadow-sm"
             >
               <Edit2 size={16} /> Edit Customer
             </button>
           )}
           {isEditing && (
             <button
-                type="button"
-                onClick={handleDelete}
-                disabled={isLoading}
-                className="flex items-center gap-2 bg-red-700 text-white hover:bg-red-800 border border-red-700 px-4 py-3 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
-              >
-                <Trash2 size={18} />
-                <span className="hidden sm:inline">Delete</span>
-              </button>
+              type="button"
+              onClick={handleDelete}
+              disabled={isLoading}
+              className="flex items-center gap-2 bg-red-700 text-white hover:bg-red-800 border border-red-700 px-4 py-3 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+            >
+              <Trash2 size={18} />
+              <span className="hidden sm:inline">Delete</span>
+            </button>
           )}
         </div>
       </div>
 
       {/* --- MAIN CARD --- */}
       <form onSubmit={handleSubmit} className={`
-        bg-white dark:bg-[#1c1917] rounded-2xl border transition-all duration-300 overflow-hidden shadow-sm
-        ${isEditing ? 'border-amber-500/50 ring-4 ring-amber-500/5' : 'border-stone-200 dark:border-stone-800'}
+        bg-stone-900 rounded-2xl border border-stone-800 transition-all duration-300 overflow-hidden shadow-sm
+        ${isEditing ? 'border-amber-500/50 ring-4 ring-amber-500/5' : 'border-stone-800'}
       `}>
 
         {/* --- HEADER SECTION --- */}
-        <div className="px-8 py-8 border-b border-stone-100 dark:border-stone-800 flex flex-col md:flex-row gap-6 md:items-center justify-between bg-stone-50/50 dark:bg-stone-900/50">
+        <div className="px-8 py-8 border-b border-stone-800 flex flex-col md:flex-row gap-6 md:items-center justify-between bg-stone-900/50">
           <div className="flex items-center gap-6">
 
             {/* Logo Box */}
-            <div className="w-24 h-24 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 flex items-center justify-center overflow-hidden shadow-sm relative shrink-0">
+            <div className="w-24 h-24 rounded-2xl bg-stone-800 border border-stone-700 flex items-center justify-center overflow-hidden shadow-sm relative shrink-0">
               {logoPreview ? (
                 <img src={logoPreview} alt="Logo" className="w-full h-full object-contain p-2" />
               ) : (
@@ -195,17 +195,17 @@ export default function CustomerClient({ customer, allImages = [] }) {
                     name="name"
                     defaultValue={customer.name}
                     required
-                    className="text-2xl md:text-3xl font-bold text-stone-900 dark:text-white bg-transparent border-b-2 border-amber-500 focus:outline-none w-full md:w-auto"
+                    className="text-2xl md:text-3xl font-bold text-white bg-transparent border-b-2 border-amber-500 focus:outline-none w-full md:w-auto"
                     placeholder="Company Name"
                   />
                 ) : (
-                  <h1 className="text-2xl md:text-3xl font-bold text-stone-900 dark:text-white">
+                  <h1 className="text-2xl md:text-3xl font-bold text-white">
                     {customer.name}
                   </h1>
                 )}
               </div>
               <div className="flex items-center gap-3 text-sm font-mono text-stone-500">
-                <span className="bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded text-stone-600 dark:text-stone-400">
+                <span className="bg-stone-800 px-2 py-0.5 rounded text-stone-400">
                   ID: #{customer.internalid}
                 </span>
                 {isEditing && <span className="text-amber-600 font-bold flex items-center gap-1"><Edit2 size={10} /> Editing Mode</span>}
@@ -231,7 +231,7 @@ export default function CustomerClient({ customer, allImages = [] }) {
 
           {/* LOGO UPLOADER (Edit Mode Only) */}
           {isEditing && (
-            <div className="p-6 bg-stone-50 dark:bg-stone-900/50 rounded-xl border border-dashed border-stone-300 dark:border-stone-700 flex flex-col md:flex-row gap-6">
+            <div className="p-6 bg-stone-900/50 rounded-xl border border-dashed border-stone-700 flex flex-col md:flex-row gap-6">
               <div className="flex-1">
                 <label className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 block">Select Existing Logo</label>
                 <select
@@ -241,7 +241,7 @@ export default function CustomerClient({ customer, allImages = [] }) {
                     setSelectedLogo(e.target.value);
                     setLogoPreview(e.target.value);
                   }}
-                  className="w-full p-3 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50"
+                  className="w-full p-3 rounded-lg border border-stone-700 bg-stone-800 text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50"
                 >
                   <option value="">-- No Logo --</option>
                   {allImages.map(img => (
@@ -252,7 +252,7 @@ export default function CustomerClient({ customer, allImages = [] }) {
               <div className="flex-1">
                 <label className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2 block">Upload New Logo</label>
                 <div className="relative group">
-                  <button type="button" className="flex items-center justify-center gap-2 w-full p-3 bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-600 rounded-lg text-stone-600 dark:text-stone-300 group-hover:border-amber-500 transition-colors">
+                  <button type="button" className="flex items-center justify-center gap-2 w-full p-3 bg-stone-800 border border-stone-600 rounded-lg text-stone-300 group-hover:border-amber-500 transition-colors">
                     <UploadCloud size={18} />
                     <span>{isUploading ? "Uploading..." : "Click to Upload"}</span>
                   </button>
@@ -272,7 +272,7 @@ export default function CustomerClient({ customer, allImages = [] }) {
 
             {/* Section 1: Contact Details */}
             <div className="space-y-6">
-              <h3 className="text-lg font-bold text-stone-800 dark:text-white flex items-center gap-2 border-b border-stone-100 dark:border-stone-800 pb-2">
+              <h3 className="text-lg font-bold text-stone-200 flex items-center gap-2 border-b border-stone-800 pb-2">
                 <User className="text-amber-600" size={20} />
                 Contact Information
               </h3>
@@ -307,7 +307,7 @@ export default function CustomerClient({ customer, allImages = [] }) {
 
             {/* Section 2: Address & Details */}
             <div className="space-y-6">
-              <h3 className="text-lg font-bold text-stone-800 dark:text-white flex items-center gap-2 border-b border-stone-100 dark:border-stone-800 pb-2">
+              <h3 className="text-lg font-bold text-stone-200 flex items-center gap-2 border-b border-stone-800 pb-2">
                 <MapPin className="text-amber-600" size={20} />
                 Address & Details
               </h3>
@@ -330,14 +330,14 @@ export default function CustomerClient({ customer, allImages = [] }) {
                   {isEditing ? (
                     <select
                       name="status"
-                      className="w-full p-2.5 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50"
+                      className="w-full p-2.5 bg-stone-900 border border-stone-700 rounded-lg text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50"
                     >
                       <option value="Active">Active</option>
                       <option value="Lead">Lead</option>
                       <option value="Archived">Archived</option>
                     </select>
                   ) : (
-                    <div className="text-base font-medium text-stone-700 dark:text-stone-300 py-1">
+                    <div className="text-base font-medium text-stone-300 py-1">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
                         Active
@@ -358,10 +358,10 @@ export default function CustomerClient({ customer, allImages = [] }) {
                   name="notes"
                   rows={4}
                   placeholder="Add internal notes about this client..."
-                  className="w-full p-4 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50 resize-none"
+                  className="w-full p-4 bg-stone-900 border border-stone-700 rounded-xl text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50 resize-none"
                 />
               ) : (
-                <div className="p-4 bg-stone-50 dark:bg-stone-900/50 rounded-xl border border-stone-100 dark:border-stone-800 text-stone-600 dark:text-stone-400 italic text-sm min-h-[100px]">
+                <div className="p-4 bg-stone-900/50 rounded-xl border border-stone-800 text-stone-400 italic text-sm min-h-[100px]">
                   {customer.notes || "No notes available."}
                 </div>
               )}
@@ -386,10 +386,10 @@ function Field({ label, icon, isEditing, value, placeholder, name, defaultValue 
           name={name}
           defaultValue={defaultValue}
           placeholder={placeholder}
-          className="w-full p-2.5 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50 transition-all placeholder:text-stone-300"
+          className="w-full p-2.5 bg-stone-900 border border-stone-700 rounded-lg text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50 transition-all placeholder:text-stone-300"
         />
       ) : (
-        <div className={`text-base font-medium py-1 border-b border-transparent ${!defaultValue ? 'text-stone-300 italic' : 'text-stone-700 dark:text-stone-300'}`}>
+        <div className={`text-base font-medium py-1 border-b border-transparent ${!defaultValue ? 'text-stone-300 italic' : 'text-stone-300'}`}>
           {defaultValue || "Not provided"}
         </div>
       )}

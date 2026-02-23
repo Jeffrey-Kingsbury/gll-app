@@ -191,7 +191,7 @@ export default function DocumentsClient({ initialFolders = [], initialFiles = []
                         <input
                             name="name"
                             placeholder="New Folder..."
-                            className="w-40 pl-9 pr-3 py-2.5 border border-stone-700 rounded-lg text-sm bg-stone-900 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all duration-200 placeholder:text-stone-600 text-stone-200"
+                            className="w-40 pl-9 pr-3 py-2.5 border border-stone-700 rounded-lg text-sm bg-stone-900 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all duration-200 placeholder:text-stone-200"
                             required
                         />
                     </div>

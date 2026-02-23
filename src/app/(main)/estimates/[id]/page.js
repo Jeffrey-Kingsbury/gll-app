@@ -27,7 +27,7 @@ export default async function EstimateDetailPage({ params, searchParams }) {
         <div className="animate-in fade-in duration-500">
             <EstimateDetailClient
                 estimate={estimate}
-                projects={projects || []}
+                projects={projects?.data || []} // Note: getProjectsAction returns { data, totalCount }
                 templates={templates || []}
                 initialIsEditing={isEditing}
             />

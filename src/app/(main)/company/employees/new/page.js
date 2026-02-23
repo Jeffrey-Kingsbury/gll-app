@@ -46,14 +46,14 @@ export default function NewEmployeePage() {
                 <ArrowLeft size={16} /> Back
             </button>
 
-            <form onSubmit={handleSubmit} className="bg-white dark:bg-[#1c1917] rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm overflow-hidden">
-                <div className="px-8 py-8 border-b border-stone-100 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-900/50 flex justify-between items-center">
+            <form onSubmit={handleSubmit} className="bg-stone-900 rounded-2xl border border-stone-800 shadow-sm overflow-hidden">
+                <div className="px-8 py-8 border-b border-stone-800 bg-stone-900/50 flex justify-between items-center">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-amber-600 rounded-xl flex items-center justify-center text-white">
                             <UserPlus size={24} />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold text-stone-900 dark:text-white">New Employee</h1>
+                            <h1 className="text-xl font-bold text-white">New Employee</h1>
                             <p className="text-sm text-stone-500">Create a new staff record in Wyatt</p>
                         </div>
                     </div>
@@ -82,7 +82,7 @@ export default function NewEmployeePage() {
                                 <label className="text-xs font-bold text-stone-400">Access Level</label>
                                 <select
                                     name="level_access"
-                                    className="w-full p-2.5 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
+                                    className="w-full p-2.5 bg-stone-900 border border-stone-700 rounded-lg text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50 transition-all"
                                     defaultValue=""
                                     required
                                 >
@@ -106,7 +106,7 @@ function Input({ label, ...props }) {
     return (
         <div className="space-y-1">
             <label className="text-xs font-bold text-stone-400">{label}</label>
-            <input {...props} className="w-full p-2.5 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50 transition-all" />
+            <input {...props} className="w-full p-2.5 bg-stone-900 border border-stone-700 rounded-lg text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50 transition-all" />
         </div>
     );
 }

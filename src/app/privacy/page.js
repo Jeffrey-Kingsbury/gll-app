@@ -22,21 +22,21 @@ export default function PrivacyPolicy() {
     }
   }, []);
 
-  if (!mounted) return <div className="min-h-screen bg-[#fdfaf6] dark:bg-stone-950" />;
+  if (!mounted) return <div className="min-h-screen bg-stone-950" />;
 
   const t = content[lang];
 
   return (
-    <div className="min-h-screen bg-[#fdfaf6] dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-sans selection:bg-amber-500/30">
-      
+    <div className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-amber-500/30">
+
       {/* --- HEADER --- */}
-      <header className="sticky top-0 z-50 w-full bg-[#fdfaf6]/80 dark:bg-stone-950/80 backdrop-blur-md border-b border-stone-200 dark:border-stone-800">
+      <header className="sticky top-0 z-50 w-full bg-[#fdfaf6]/80 bg-stone-950/80 backdrop-blur-md border-b border-stone-800">
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
-          
+
           {/* Back Button */}
-          <Link 
-            href="/" 
-            className="flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-amber-600 dark:text-stone-400 dark:hover:text-amber-500 transition-colors"
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm font-medium text-stone-500 hover:text-amber-600 text-stone-400 hover:text-amber-500 transition-colors"
           >
             <ArrowLeft size={16} />
             {lang === "en" ? "Back to Login" : "Retour à la connexion"}
@@ -45,7 +45,7 @@ export default function PrivacyPolicy() {
           {/* Language Toggle */}
           <button
             onClick={() => setLang(lang === "en" ? "fr" : "en")}
-            className="flex items-center gap-2 px-3 py-1.5 bg-stone-100 dark:bg-stone-900 hover:bg-stone-200 dark:hover:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-full text-xs font-bold tracking-wide transition-all border border-stone-200 dark:border-stone-800"
+            className="flex items-center gap-2 px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-stone-300 rounded-full text-xs font-bold tracking-wide transition-all border border-stone-800"
           >
             <Globe size={14} />
             {lang === "en" ? "EN" : "FR"}
@@ -55,20 +55,20 @@ export default function PrivacyPolicy() {
 
       {/* --- MAIN CONTENT --- */}
       <main className="max-w-3xl mx-auto px-6 py-12 md:py-20">
-        
+
         {/* Title Section */}
-        <div className="mb-12 border-b border-stone-200 dark:border-stone-800 pb-8">
-          <h1 className="text-3xl md:text-4xl font-bold font-serif text-stone-900 dark:text-[#eaddcf] mb-4">
+        <div className="mb-12 border-b border-stone-800 pb-8">
+          <h1 className="text-3xl md:text-4xl font-bold font-serif text-stone-900 text-[#eaddcf] mb-4">
             {t.title}
           </h1>
-          <p className="text-stone-500 dark:text-stone-400">
-            {t.lastUpdated}: <span className="font-mono text-stone-700 dark:text-stone-300">{new Date().toLocaleDateString(lang === 'en' ? 'en-US' : 'fr-CA')}</span>
+          <p className="text-stone-400">
+            {t.lastUpdated}: <span className="font-mono text-stone-300">{new Date().toLocaleDateString(lang === 'en' ? 'en-US' : 'fr-CA')}</span>
           </p>
         </div>
 
         {/* Content Blocks */}
-        <div className="space-y-12 text-lg leading-relaxed text-stone-700 dark:text-stone-300">
-          
+        <div className="space-y-12 text-lg leading-relaxed text-stone-300">
+
           <Section title={t.collection_title} icon={<Database size={20} className="text-stone-400" />}>
             <p>{t.collection_text}</p>
             <ul className="list-disc pl-5 space-y-2 mt-4 marker:text-amber-500 text-base">
@@ -90,20 +90,20 @@ export default function PrivacyPolicy() {
             <p>{t.cookies_text}</p>
           </Section>
 
-           {/* Contact Box */}
-           <div className="mt-16 p-8 bg-stone-100 dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-800">
-              <h3 className="text-xl font-bold mb-2 text-stone-900 dark:text-white">{t.contact_title}</h3>
-              <p className="text-stone-600 dark:text-stone-400 mb-4">{t.contact_text}</p>
-              <a href="mailto:privacy@wyattsoftware.com" className="text-amber-600 font-medium hover:underline">
-                privacy@wyattsoftware.com
-              </a>
-           </div>
+          {/* Contact Box */}
+          <div className="mt-16 p-8 bg-stone-900 rounded-2xl border border-stone-800">
+            <h3 className="text-xl font-bold mb-2 text-white">{t.contact_title}</h3>
+            <p className="text-stone-400 mb-4">{t.contact_text}</p>
+            <a href="mailto:privacy@wyattsoftware.com" className="text-amber-600 font-medium hover:underline">
+              privacy@wyattsoftware.com
+            </a>
+          </div>
 
         </div>
       </main>
 
       {/* --- FOOTER --- */}
-      <footer className="py-8 text-center text-xs text-stone-400 dark:text-stone-600 border-t border-stone-200 dark:border-stone-800 bg-[#fdfaf6] dark:bg-stone-950">
+      <footer className="py-8 text-center text-xs text-stone-600 border-t border-stone-800 bg-stone-950">
         &copy; {new Date().getFullYear()} {process.env.NEXT_PUBLIC_COMPANY_NAME || "GLL App"}. {t.footer_rights}
       </footer>
     </div>
@@ -114,13 +114,13 @@ export default function PrivacyPolicy() {
 function Section({ title, icon, children }) {
   return (
     <section>
-      <h2 className="text-xl md:text-2xl font-bold text-stone-900 dark:text-[#eaddcf] mb-4 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-stone-200 dark:bg-stone-800 flex items-center justify-center">
-            {icon}
+      <h2 className="text-xl md:text-2xl font-bold text-stone-900 text-[#eaddcf] mb-4 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-stone-800 flex items-center justify-center">
+          {icon}
         </div>
         {title}
       </h2>
-      <div className="pl-11 border-l-2 border-stone-100 dark:border-stone-800 ml-4">
+      <div className="pl-11 border-l-2 border-stone-800 ml-4">
         {children}
       </div>
     </section>
@@ -132,7 +132,7 @@ const content = {
   en: {
     title: "Privacy Policy",
     lastUpdated: "Last Updated",
-    
+
     collection_title: "Information We Collect",
     collection_text: "We collect only the information necessary to provide our services efficiently. This includes:",
     collection_list: [

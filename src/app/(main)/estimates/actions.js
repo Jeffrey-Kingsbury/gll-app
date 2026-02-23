@@ -21,6 +21,77 @@ export async function getProjectsAction() {
   }
 }
 
+export async function approveEstimateAction(estimateId) {
+  try {
+    // We use a transaction to ensure all steps succeed, or everything rolls back
+    return await mysql_transaction(async (connection) => {
+
+      // 1. Fetch the estimate details
+      const [estRows] = await connection.execute(
+        "SELECT * FROM estimates WHERE internalid = ?",
+        [estimateId]
+      );
+
+      if (estRows.length === 0) throw new Error("Estimate not found.");
+      const estimate = estRows[0];
+
+      if (estimate.status === 'Approved') {
+        throw new Error("Estimate is already approved.");
+      }
+      if (!estimate.project_id) {
+        throw new Error("Cannot approve an estimate that is not linked to a Project.");
+      }
+
+      // 2. Update the Estimate Status
+      await connection.execute(
+        "UPDATE estimates SET status = 'Approved' WHERE internalid = ?",
+        [estimateId]
+      );
+
+      // 3. Create the Expense Report (Budget Header)
+      const reportName = `Budget: ${estimate.project_name || 'Estimate ' + estimateId}`;
+      const [reportResult] = await connection.execute(
+        `INSERT INTO expense_reports (project_id, estimate_id, name, status) 
+                 VALUES (?, ?, ?, 'Active')`,
+        [estimate.project_id, estimateId, reportName]
+      );
+      const expenseReportId = reportResult.insertId;
+
+      // 4. Fetch Estimate Items
+      const [items] = await connection.execute(
+        "SELECT * FROM estimate_items WHERE estimate_id = ?",
+        [estimateId]
+      );
+
+      // 5. Create Expense Report Lines (Budget Lines)
+      if (items.length > 0) {
+        const lineQuery = `
+                    INSERT INTO expense_report_lines 
+                    (expense_report_id, task_name, estimated_labor_cost, estimated_material_cost) 
+                    VALUES ?
+                `;
+
+        // Map items to bulk insert format
+        // We use 'subcategory' as the task name, fallback to 'category'
+        const lineValues = items.map(item => [
+          expenseReportId,
+          item.subcategory || item.category || 'Unnamed Task',
+          item.labor_cost || 0,
+          item.material_cost || 0
+        ]);
+
+        // connection.query (not execute) is required for bulk inserting arrays in mysql2
+        await connection.query(lineQuery, [lineValues]);
+      }
+
+      return { success: true, expenseReportId };
+    });
+  } catch (error) {
+    console.error("Approve Estimate Error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function getEstimateByIdAction(id) {
   try {
     const [estimate] = await mysql_executeQueryReadOnly(
@@ -207,10 +278,10 @@ export async function saveEstimateAction(data) {
       // Helper: if projectMode is existing, we should probably fetch the project name/client from DB
       // But since we are in a transaction, we can do it here. 
       if (data.projectMode === 'existing' && data.selectedProjectId) {
-        const [projs] = await connection.execute("SELECT name, client_name FROM projects WHERE internalid = ?", [data.selectedProjectId]);
+        const [projs] = await connection.execute("SELECT name FROM projects WHERE internalid = ?", [data.selectedProjectId]);
         if (projs.length > 0) {
           // override with actual data
-          clientName = projs[0].client_name;
+          clientName = projs[0].name;
         }
       }
 

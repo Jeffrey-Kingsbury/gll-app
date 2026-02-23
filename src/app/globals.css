@@ -4,46 +4,34 @@
 @tailwind utilities;
 
 :root {
-  /* Base: Warm Paper / Beige */
-  --background: #fdfaf6; 
-  /* Text: Stone 900 */
-  --foreground: #1c1917; 
+  /* Base: Stone 950 */
+  --background: #0c0a09; 
+  /* Text: Stone 100 */
+  --foreground: #f5f5f4; 
   
-  /* Cards: Pure White */
-  --card-background: #ffffff;
+  /* Cards: Stone 900 */
+  --card-background: #1c1917;
   
-  /* Borders: Stone 200 */
-  --border-color: #e7e5e4;
+  /* Borders: Stone 800 */
+  --border-color: #292524;
   
-  /* Primary: Stone 900 (The "Wyatt" dark theme) */
-  --primary: #1c1917;
-  --primary-hover: #44403c;
+  /* Primary: Stone 100 */
+  --primary: #f5f5f4;
+  --primary-hover: #e7e5e4;
   
-  /* Secondary: Stone 100 (For backgrounds/hovers) */
-  --secondary: #f5f5f4;
+  /* Secondary: Stone 800 */
+  --secondary: #292524;
   
-  /* Accent: Amber 600 (For "Construction" highlights) */
+  /* Accent: Amber 600 */
   --accent: #d97706;  
   
-  /* Muted Text: Stone 500 */
-  --text-muted: #78716c;
+  /* Muted Text: Stone 400 */
+  --text-muted: #a8a29e;
   
   /* Warm Shadows */
   --shadow-light: 0 1px 3px 0 rgb(28 25 23 / 0.05), 0 1px 2px -1px rgb(28 25 23 / 0.05);
   --shadow-medium: 0 4px 6px -1px rgb(28 25 23 / 0.05), 0 2px 4px -2px rgb(28 25 23 / 0.05);
   --shadow-large: 0 10px 15px -3px rgb(28 25 23 / 0.05), 0 4px 6px -4px rgb(28 25 23 / 0.05);
-}
-
-/* Optional: Dark Mode Variables (if your system toggles .dark class) */
-.dark {
-  --background: #0c0a09; /* Stone 950 */
-  --foreground: #f5f5f4; /* Stone 100 */
-  --card-background: #1c1917; /* Stone 900 */
-  --border-color: #292524; /* Stone 800 */
-  --primary: #f5f5f4; /* Stone 100 */
-  --primary-hover: #e7e5e4; /* Stone 200 */
-  --secondary: #292524; /* Stone 800 */
-  --text-muted: #a8a29e; /* Stone 400 */
 }
 
 * {

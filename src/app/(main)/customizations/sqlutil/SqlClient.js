@@ -128,9 +128,9 @@ export default function SqlClient() {
             <div className="flex-1 flex flex-col gap-4 min-w-0">
 
                 {/* Editor Card */}
-                <div className="bg-white dark:bg-[#1c1917] rounded-xl border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col h-1/3 min-h-[200px]">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/50 rounded-t-xl">
-                        <div className="flex items-center gap-2 text-sm font-bold text-stone-600 dark:text-stone-300">
+                <div className="bg-[#1c1917] rounded-xl border border-stone-800 shadow-sm flex flex-col h-1/3 min-h-[200px]">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-stone-800 bg-stone-900/50 rounded-t-xl">
+                        <div className="flex items-center gap-2 text-sm font-bold text-stone-300">
                             <Database size={16} /> SQL Editor
                         </div>
                         <button
@@ -145,18 +145,18 @@ export default function SqlClient() {
                     <textarea
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        className="flex-1 w-full p-4 bg-transparent font-mono text-sm text-stone-800 dark:text-stone-200 outline-none resize-none placeholder:text-stone-400"
+                        className="flex-1 w-full p-4 bg-transparent font-mono text-sm text-stone-200 outline-none resize-none placeholder:text-stone-400"
                         spellCheck="false"
                         placeholder="SELECT * FROM table_name..."
                     />
                 </div>
 
                 {/* Results Area */}
-                <div className="flex-1 bg-white dark:bg-[#1c1917] rounded-xl border border-stone-200 dark:border-stone-800 shadow-sm overflow-hidden flex flex-col">
+                <div className="flex-1 bg-[#1c1917] rounded-xl border border-stone-800 shadow-sm overflow-hidden flex flex-col">
                     {error ? (
                         <div className="p-8 flex flex-col items-center justify-center text-red-500 gap-3 h-full">
                             <AlertCircle size={32} />
-                            <p className="font-mono text-sm bg-red-50 dark:bg-red-900/20 px-4 py-2 rounded-lg text-center max-w-lg border border-red-100 dark:border-red-900/30">
+                            <p className="font-mono text-sm bg-red-900/20 px-4 py-2 rounded-lg text-center max-w-lg border border-red-900/30">
                                 {error}
                             </p>
                         </div>
@@ -167,13 +167,13 @@ export default function SqlClient() {
                     ) : (
                         <>
                             {/* --- RESULTS TOOLBAR --- */}
-                            <div className="px-4 py-2 bg-stone-50 dark:bg-stone-900/50 border-b border-stone-200 dark:border-stone-800 text-xs text-stone-500 flex justify-between items-center">
+                            <div className="px-4 py-2 bg-stone-900/50 border-b border-stone-800 text-xs text-stone-500 flex justify-between items-center">
                                 <span className="font-mono">{results.length} rows returned</span>
 
                                 <div className="flex items-center gap-2">
                                     <button
                                         onClick={handleCopyClipboard}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-stone-200 dark:hover:bg-stone-800 rounded-md transition-colors text-stone-600 dark:text-stone-400"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-stone-800 rounded-md transition-colors text-stone-400"
                                         title="Copy to Clipboard"
                                     >
                                         {isCopied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
@@ -182,11 +182,11 @@ export default function SqlClient() {
                                         </span>
                                     </button>
 
-                                    <div className="h-4 w-px bg-stone-300 dark:bg-stone-700"></div>
+                                    <div className="h-4 w-px bg-stone-700"></div>
 
                                     <button
                                         onClick={handleExportCSV}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-stone-200 dark:hover:bg-stone-800 rounded-md transition-colors text-stone-600 dark:text-stone-400"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-stone-800 rounded-md transition-colors text-stone-400"
                                         title="Download CSV"
                                     >
                                         <Download size={14} />
@@ -197,21 +197,21 @@ export default function SqlClient() {
 
                             {/* Table */}
                             <div className="flex-1 overflow-auto">
-                                <table className="w-full text-left text-xs text-stone-600 dark:text-stone-300 whitespace-nowrap">
-                                    <thead className="bg-stone-100 dark:bg-stone-800 sticky top-0 z-10 shadow-sm">
+                                <table className="w-full text-left text-xs text-stone-300 whitespace-nowrap">
+                                    <thead className="bg-stone-800 sticky top-0 z-10 shadow-sm">
                                         <tr>
                                             {results.length > 0 ? Object.keys(results[0]).map(key => (
-                                                <th key={key} className="px-4 py-3 font-bold border-b border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200">
+                                                <th key={key} className="px-4 py-3 font-bold border-b border-stone-700 text-stone-200">
                                                     {key}
                                                 </th>
                                             )) : <th className="px-4 py-3">Result</th>}
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-stone-100 dark:divide-stone-800 font-mono">
+                                    <tbody className="divide-y divide-stone-800 font-mono">
                                         {results.map((row, i) => (
-                                            <tr key={i} className="hover:bg-amber-50 dark:hover:bg-amber-900/10 transition-colors">
+                                            <tr key={i} className="hover:bg-amber-50 hover:bg-amber-900/10 transition-colors">
                                                 {Object.values(row).map((val, j) => (
-                                                    <td key={j} className="px-4 py-2 border-r border-stone-100 dark:border-stone-800 last:border-0 max-w-xs truncate">
+                                                    <td key={j} className="px-4 py-2 border-r border-stone-800 last:border-0 max-w-xs truncate">
                                                         {val === null ? <span className="text-stone-300 italic">NULL</span> : String(val)}
                                                     </td>
                                                 ))}
@@ -226,10 +226,10 @@ export default function SqlClient() {
             </div>
 
             {/* --- RIGHT: SCHEMA BROWSER --- */}
-            <div className="w-64 bg-white dark:bg-[#1c1917] rounded-xl border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col overflow-hidden shrink-0">
-                <div className="px-4 py-3 border-b border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/50 font-bold text-stone-600 dark:text-stone-300 text-sm flex justify-between items-center">
+            <div className="w-64 bg-[#1c1917] rounded-xl border border-stone-800 shadow-sm flex flex-col overflow-hidden shrink-0">
+                <div className="px-4 py-3 border-b border-stone-800 bg-stone-900/50 font-bold text-stone-300 text-sm flex justify-between items-center">
                     <span>Schema</span>
-                    <button onClick={loadSchema} className="p-1 hover:bg-stone-200 dark:hover:bg-stone-700 rounded transition-colors" title="Refresh Schema">
+                    <button onClick={loadSchema} className="p-1 hover:bg-stone-700 rounded transition-colors" title="Refresh Schema">
                         <RefreshCw size={12} className={isSchemaLoading ? "animate-spin" : ""} />
                     </button>
                 </div>
@@ -243,7 +243,7 @@ export default function SqlClient() {
                         <div key={tableName} className="rounded-lg overflow-hidden">
                             <button
                                 onClick={() => toggleTable(tableName)}
-                                className="w-full flex items-center gap-2 px-2 py-1.5 text-xs font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors text-left select-none"
+                                className="w-full flex items-center gap-2 px-2 py-1.5 text-xs font-bold text-stone-300 hover:bg-stone-800 transition-colors text-left select-none"
                             >
                                 {expandedTables[tableName] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                 <Table size={14} className="text-amber-600 shrink-0" />
@@ -252,9 +252,9 @@ export default function SqlClient() {
 
                             {/* Columns List */}
                             {expandedTables[tableName] && (
-                                <div className="pl-7 pr-2 py-1 space-y-1 bg-stone-50 dark:bg-stone-900/30 animate-in slide-in-from-top-1 duration-200">
+                                <div className="pl-7 pr-2 py-1 space-y-1 bg-stone-900/30 animate-in slide-in-from-top-1 duration-200">
                                     {schema[tableName].map((col) => (
-                                        <div key={col.name} className="flex items-center justify-between text-[10px] text-stone-500 group hover:text-stone-800 dark:hover:text-stone-200 cursor-default">
+                                        <div key={col.name} className="flex items-center justify-between text-[10px] text-stone-500 group hover:text-stone-200 cursor-default">
                                             <div className="flex items-center gap-1.5 overflow-hidden">
                                                 <Columns size={10} className="shrink-0" />
                                                 <span className="font-mono truncate" onClick={() => setQuery(prev => `${prev}${prev.endsWith(' ') ? '' : ' '}${col.name}`)} title={col.name}>{col.name}</span>

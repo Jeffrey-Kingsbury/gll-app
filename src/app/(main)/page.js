@@ -13,7 +13,7 @@ import {
 import { getDashboardStatsAction, getCustomChartDataAction } from "./actions";
 
 export default function DashboardPage() {
-  const { t, darkMode } = useSettings();
+  const { t } = useSettings();
   const [stats, setStats] = useState({
     activeProjects: 0,
     totalEstimates: 0,
@@ -52,16 +52,16 @@ export default function DashboardPage() {
   }, [chartConfig]);
 
   // --- Theme Colors ---
-  const chartColor = darkMode ? "#fbbf24" : "#d97706"; // Amber
-  const gridColor = darkMode ? "#44403c" : "#e7e5e4";
-  const textColor = darkMode ? "#a8a29e" : "#78716c";
+  const chartColor = "#fbbf24"; // Amber
+  const gridColor = "#44403c";
+  const textColor = "#a8a29e";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
       {/* 1. Quick Actions Row */}
       <div className="flex flex-wrap gap-4">
-        <ActionButton label="New Project" icon={<Hammer size={18} />} color="bg-stone-900 dark:bg-stone-800 text-[#eaddcf] dark:text-amber-500" />
+        <ActionButton label="New Project" icon={<Hammer size={18} />} color="bg-stone-800 text-amber-500" />
         <ActionButton label="New Estimate" icon={<Plus size={18} />} color="bg-amber-700 hover:bg-amber-600 text-white" />
         <ActionButton label="New Quote" icon={<FileText size={18} />} color="bg-stone-600 hover:bg-stone-500 text-white" />
         <ActionButton label="Log Time" icon={<Clock size={18} />} color="bg-[#eaddcf] hover:bg-[#decbc0] text-stone-900" />
@@ -72,22 +72,22 @@ export default function DashboardPage() {
         <StatCard
           title="Active Projects"
           value={stats.activeProjects}
-          icon={<Users className="text-stone-600 dark:text-stone-300" />}
+          icon={<Users className="text-stone-300" />}
         />
         <StatCard
           title="Total Estimates"
           value={`$${stats.totalEstimates.toLocaleString()}`}
-          icon={<FileText className="text-amber-600 dark:text-amber-400" />}
+          icon={<FileText className="text-amber-400" />}
         />
         <StatCard
           title="Hours (This Week)"
           value={stats.hoursWeek}
-          icon={<Clock className="text-stone-600 dark:text-stone-300" />}
+          icon={<Clock className="text-stone-300" />}
         />
         <StatCard
           title="Revenue (Month)"
           value={`$${stats.revenueMonth.toLocaleString()}`}
-          icon={<TrendingUp className="text-emerald-600 dark:text-emerald-400" />}
+          icon={<TrendingUp className="text-emerald-400" />}
         />
       </div>
 
@@ -95,11 +95,11 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         {/* Main Chart Card */}
-        <div className="lg:col-span-2 bg-white dark:bg-stone-900 p-6 rounded-xl shadow-sm border border-stone-200 dark:border-stone-800">
+        <div className="lg:col-span-2 bg-stone-900 p-6 rounded-xl shadow-sm border border-stone-800">
 
           {/* Chart Controls */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-stone-100 dark:border-stone-800 pb-4">
-            <h3 className="text-lg font-bold text-stone-900 dark:text-[#eaddcf] font-serif flex items-center gap-2">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-stone-800 pb-4">
+            <h3 className="text-lg font-bold text-[#eaddcf] font-serif flex items-center gap-2">
               <BarChart2 size={20} className="text-amber-600" />
               Custom Analytics
             </h3>
@@ -109,7 +109,7 @@ export default function DashboardPage() {
               <select
                 value={chartConfig.metric}
                 onChange={(e) => setChartConfig({ ...chartConfig, metric: e.target.value })}
-                className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500/50"
+                className="bg-stone-800 border border-stone-700 text-stone-300 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500/50"
               >
                 <option value="hours">Hours Logged</option>
                 <option value="revenue">Estimate Revenue</option>
@@ -120,7 +120,7 @@ export default function DashboardPage() {
               <select
                 value={chartConfig.groupBy}
                 onChange={(e) => setChartConfig({ ...chartConfig, groupBy: e.target.value })}
-                className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500/50"
+                className="bg-stone-800 border border-stone-700 text-stone-300 text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500/50"
               >
                 <option value="day">By Day</option>
                 <option value="week">By Week</option>
@@ -130,20 +130,20 @@ export default function DashboardPage() {
               </select>
 
               {/* Date Range (Simple Last 30 Days toggle for demo, or date inputs) */}
-              <div className="flex items-center gap-2 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 bg-stone-800 border border-stone-700 rounded-lg px-3 py-2">
                 <Calendar size={14} className="text-stone-400" />
                 <input
                   type="date"
                   value={chartConfig.startDate}
                   onChange={(e) => setChartConfig({ ...chartConfig, startDate: e.target.value })}
-                  className="bg-transparent text-xs text-stone-600 dark:text-stone-300 outline-none w-24"
+                  className="bg-transparent text-xs text-stone-300 outline-none w-24"
                 />
                 <span className="text-stone-400">-</span>
                 <input
                   type="date"
                   value={chartConfig.endDate}
                   onChange={(e) => setChartConfig({ ...chartConfig, endDate: e.target.value })}
-                  className="bg-transparent text-xs text-stone-600 dark:text-stone-300 outline-none w-24"
+                  className="bg-transparent text-xs text-stone-300 outline-none w-24"
                 />
               </div>
             </div>
@@ -184,12 +184,12 @@ export default function DashboardPage() {
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: darkMode ? '#1c1917' : '#fff',
+                      backgroundColor: '#1c1917',
                       borderRadius: '8px',
-                      border: `1px solid ${darkMode ? '#44403c' : '#e7e5e4'}`,
+                      border: `1px solid #44403c`,
                       boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                     }}
-                    itemStyle={{ color: darkMode ? '#eaddcf' : '#1c1917', fontSize: '12px', fontWeight: 'bold' }}
+                    itemStyle={{ color: '#eaddcf', fontSize: '12px', fontWeight: 'bold' }}
                     labelStyle={{ color: textColor, marginBottom: '0.5rem', fontSize: '11px' }}
                   />
                   <Area
@@ -208,12 +208,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Activity List */}
-        <div className="bg-white dark:bg-stone-900 p-6 rounded-xl shadow-sm border border-stone-200 dark:border-stone-800 flex flex-col h-full">
+        <div className="bg-stone-900 p-6 rounded-xl shadow-sm border border-stone-800 flex flex-col h-full">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-stone-900 dark:text-[#eaddcf] font-serif">
+            <h3 className="text-lg font-bold text-[#eaddcf] font-serif">
               Recent Projects
             </h3>
-            <button className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 transition-colors">
+            <button className="text-stone-400 hover:text-stone-200 transition-colors">
               <ArrowRight size={20} />
             </button>
           </div>
@@ -222,12 +222,12 @@ export default function DashboardPage() {
             {stats.recentProjects.length === 0 ? (
               <p className="text-stone-400 text-sm italic">No recent activity.</p>
             ) : stats.recentProjects.map((project) => (
-              <div key={project.internalid} className="flex flex-col pb-4 border-b border-stone-100 dark:border-stone-800 last:border-0 last:pb-0 group">
+              <div key={project.internalid} className="flex flex-col pb-4 border-b border-stone-800 last:border-0 last:pb-0 group">
                 <div className="flex justify-between items-start">
-                  <span className="font-semibold text-stone-800 dark:text-stone-200 text-sm group-hover:text-amber-600 transition-colors cursor-pointer">
+                  <span className="font-semibold text-stone-200 text-sm group-hover:text-amber-600 transition-colors cursor-pointer">
                     {project.name}
                   </span>
-                  <span className="text-xs font-mono text-stone-500 dark:text-stone-400">
+                  <span className="text-xs font-mono text-stone-400">
                     ${parseFloat(project.budget || 0).toLocaleString()}
                   </span>
                 </div>
@@ -258,14 +258,14 @@ function ActionButton({ label, icon, color }) {
 
 function StatCard({ title, value, icon }) {
   return (
-    <div className="bg-white dark:bg-stone-900 p-6 rounded-xl shadow-sm border border-stone-200 dark:border-stone-800 transition hover:border-amber-500/30">
+    <div className="bg-stone-900 p-6 rounded-xl shadow-sm border border-stone-800 transition hover:border-amber-500/30">
       <div className="flex items-center justify-between mb-4">
         <span className="text-xs font-bold text-stone-500 uppercase tracking-widest">{title}</span>
-        <div className="p-2 bg-stone-50 dark:bg-stone-800 rounded-lg">
+        <div className="p-2 bg-stone-800 rounded-lg">
           {icon}
         </div>
       </div>
-      <div className="text-3xl font-bold text-stone-900 dark:text-[#eaddcf] mb-1 font-serif">
+      <div className="text-3xl font-bold text-[#eaddcf] mb-1 font-serif">
         {value}
       </div>
     </div>
@@ -274,10 +274,10 @@ function StatCard({ title, value, icon }) {
 
 function StatusPill({ status }) {
   const styles = {
-    Active: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800",
-    Pending: "bg-stone-100 text-stone-600 border-stone-200 dark:bg-stone-800 dark:text-stone-400 dark:border-stone-700",
-    Completed: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800",
-    Planning: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800",
+    Active: "bg-amber-100 text-amber-800 border-amber-200",
+    Pending: "bg-stone-100 text-stone-600 border-stone-200",
+    Completed: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    Planning: "bg-blue-100 text-blue-800 border-blue-200",
   };
 
   return (

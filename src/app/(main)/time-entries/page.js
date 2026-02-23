@@ -174,9 +174,9 @@ export default function TimeEntriesPage() {
         <div className="space-y-6 animate-in fade-in pb-20">
 
             {/* HEADER */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-stone-200 dark:border-stone-800 pb-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-stone-800 pb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-stone-900 dark:text-white flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-white flex items-center gap-3">
                         <Clock className="text-amber-600" size={32} />
                         Time Entries
                     </h1>
@@ -191,14 +191,14 @@ export default function TimeEntriesPage() {
             </div>
 
             {/* --- FILTER BAR --- */}
-            <div className="bg-white dark:bg-[#1c1917] p-4 rounded-xl border border-stone-200 dark:border-stone-800 shadow-sm flex flex-col md:flex-row gap-4 items-end">
+            <div className="bg-[#1c1917] p-4 rounded-xl border border-stone-800 shadow-sm flex flex-col md:flex-row gap-4 items-end">
                 <div className="w-full md:w-auto">
                     <label className="text-xs font-bold text-stone-400 uppercase block mb-1">Start Date</label>
                     <input
                         type="date"
                         value={filters.startDate}
                         onChange={e => setFilters({ ...filters, startDate: e.target.value })}
-                        className="w-full md:w-40 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-2 text-sm outline-none dark:text-white"
+                        className="w-full md:w-40 bg-stone-900 border border-stone-200 border-stone-700 rounded-lg p-2 text-sm outline-none text-white"
                     />
                 </div>
                 <div className="w-full md:w-auto">
@@ -207,7 +207,7 @@ export default function TimeEntriesPage() {
                         type="date"
                         value={filters.endDate}
                         onChange={e => setFilters({ ...filters, endDate: e.target.value })}
-                        className="w-full md:w-40 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-2 text-sm outline-none dark:text-white"
+                        className="w-full md:w-40 bg-stone-900 border border-stone-200 border-stone-700 rounded-lg p-2 text-sm outline-none text-white"
                     />
                 </div>
                 <div className="flex-1 w-full">
@@ -215,21 +215,21 @@ export default function TimeEntriesPage() {
                     <select
                         value={filters.projectId}
                         onChange={e => setFilters({ ...filters, projectId: e.target.value })}
-                        className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-2 text-sm outline-none dark:text-white"
+                        className="w-full bg-stone-900 border border-stone-200 border-stone-700 rounded-lg p-2 text-sm outline-none text-white"
                     >
                         <option value="">All Projects</option>
                         {projects.map(p => <option key={p.internalid} value={p.internalid}>{p.name}</option>)}
                     </select>
                 </div>
-                <button onClick={loadData} className="p-2 bg-stone-100 dark:bg-stone-800 text-stone-500 rounded-lg hover:text-amber-600 transition-colors">
+                <button onClick={loadData} className="p-2 bg-stone-100 bg-stone-800 text-stone-500 rounded-lg hover:text-amber-600 transition-colors">
                     <RefreshCcw size={20} className={isLoading ? "animate-spin" : ""} />
                 </button>
             </div>
 
             {/* --- ENTRIES TABLE --- */}
-            <div className="bg-white dark:bg-[#1c1917] border border-stone-200 dark:border-stone-800 rounded-2xl overflow-hidden shadow-sm">
+            <div className="bg-[#1c1917] border border-stone-800 rounded-2xl overflow-hidden shadow-sm">
                 <table className="w-full text-left text-sm">
-                    <thead className="bg-stone-50 dark:bg-stone-900/50 text-stone-400 font-bold uppercase text-xs">
+                    <thead className="bg-stone-900/50 text-stone-400 font-bold uppercase text-xs">
                         <tr>
                             <SortableHeader label="Date" colKey="date" align="center" currentSort={sortConfig} onSort={handleSort} />
                             <SortableHeader label="Employee" colKey="employee" align="center" currentSort={sortConfig} onSort={handleSort} />
@@ -239,7 +239,7 @@ export default function TimeEntriesPage() {
                             <SortableHeader label="Status" colKey="status" align="center" currentSort={sortConfig} onSort={handleSort} />
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-stone-100 dark:divide-stone-800/50">
+                    <tbody className="divide-y divide-stone-100 divide-stone-800/50">
                         {isLoading ? (
                             <tr><td colSpan="5" className="px-6 py-10 text-center text-stone-400 animate-pulse">Loading data...</td></tr>
                         ) : entries.length === 0 ? (
@@ -248,21 +248,21 @@ export default function TimeEntriesPage() {
                             <tr
                                 key={entry.internalid}
                                 onClick={() => handleEdit(entry)}
-                                className={`group transition-colors cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800`}
+                                className={`group transition-colors cursor-pointer hover:bg-stone-800`}
                             >
                                 <td className="px-6 py-4 text-stone-500 font-mono">{new Date(entry.date).toLocaleDateString()}</td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
-                                        <User className="w-6 h-6 text-stone-700 dark:text-stone-300" />
-                                        <span className="font-bold text-stone-700 dark:text-stone-300">{entry.employee_name}</span>
+                                        <User className="w-6 h-6 text-stone-300" />
+                                        <span className="font-bold text-stone-300">{entry.employee_name}</span>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="font-bold text-stone-800 dark:text-white">{entry.project_name}</div>
+                                    <div className="font-bold text-white">{entry.project_name}</div>
                                     <div className="text-stone-500 text-xs">{entry.task_name}</div>
                                 </td>
-                                <td className="px-6 py-4 text-center font-mono font-bold text-lg text-stone-600 dark:text-stone-300">{entry.hours}</td>
-                                <td className="px-6 py-4 text-left font-mono font-bold text-xs text-stone-600 dark:text-stone-300">{entry.memo}</td>
+                                <td className="px-6 py-4 text-center font-mono font-bold text-lg text-stone-300">{entry.hours}</td>
+                                <td className="px-6 py-4 text-left font-mono font-bold text-xs text-stone-300">{entry.memo}</td>
                                 <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                                     {userLevel <= 2 ? (
                                         <button
@@ -291,38 +291,38 @@ export default function TimeEntriesPage() {
             {/* --- FORM MODAL (Same as before) --- */}
             {isFormOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-white dark:bg-[#1c1917] w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-stone-200 dark:border-stone-800 animate-in zoom-in-95">
-                        <div className="p-6 border-b border-stone-200 dark:border-stone-800 flex justify-between items-center bg-stone-50 dark:bg-stone-900/50">
-                            <h3 className="text-lg font-bold text-stone-900 dark:text-white">{formData.internalid ? "Edit Entry" : "New Time Entry"}</h3>
+                    <div className="bg-[#1c1917] w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-stone-800 animate-in zoom-in-95">
+                        <div className="p-6 border-b border-stone-800 flex justify-between items-center bg-stone-900/50">
+                            <h3 className="text-lg font-bold text-white">{formData.internalid ? "Edit Entry" : "New Time Entry"}</h3>
                             <button onClick={() => setIsFormOpen(false)}><X className="text-stone-400 hover:text-stone-600" /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                <div><label className="text-xs font-bold text-stone-400 uppercase">Date</label><input type="date" required value={formData.date ? formData.date.split('T')[0] : ''} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-2.5 outline-none dark:text-white" /></div>
-                                <div><label className="text-xs font-bold text-stone-400 uppercase">Hours</label><input type="number" step="0.25" required value={formData.hours} onChange={e => setFormData({ ...formData, hours: e.target.value })} className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-2.5 outline-none dark:text-white" /></div>
+                                <div><label className="text-xs font-bold text-stone-400 uppercase">Date</label><input type="date" required value={formData.date ? formData.date.split('T')[0] : ''} onChange={e => setFormData({ ...formData, date: e.target.value })} className="w-full bg-stone-900 border border-stone-200 border-stone-700 rounded-lg p-2.5 outline-none text-white" /></div>
+                                <div><label className="text-xs font-bold text-stone-400 uppercase">Hours</label><input type="number" step="0.25" required value={formData.hours} onChange={e => setFormData({ ...formData, hours: e.target.value })} className="w-full bg-stone-900 border border-stone-200 border-stone-700 rounded-lg p-2.5 outline-none text-white" /></div>
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-stone-400 uppercase">Project</label>
-                                <select value={formData.project_id} onChange={handleProjectChange} className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-2.5 outline-none dark:text-white">
+                                <select value={formData.project_id} onChange={handleProjectChange} className="w-full bg-stone-900 border border-stone-200 border-stone-700 rounded-lg p-2.5 outline-none text-white">
                                     <option value="">-- Select Project --</option>
                                     {projects.map(p => <option key={p.internalid} value={p.internalid}>{p.name}</option>)}
                                 </select>
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-stone-400 uppercase">Task</label>
-                                <select required value={formData.task_name} onChange={e => setFormData({ ...formData, task_name: e.target.value })} className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-2.5 outline-none dark:text-white">
+                                <select required value={formData.task_name} onChange={e => setFormData({ ...formData, task_name: e.target.value })} className="w-full bg-stone-900 border border-stone-200 border-stone-700 rounded-lg p-2.5 outline-none text-white">
                                     <option value="">-- Select Task --</option>
                                     {tasks.map((t, i) => <option key={i} value={t.task_name}>{t.task_name}</option>)}
                                     <option value="General">General / Other</option>
                                 </select>
                             </div>
-                            <div><label className="text-xs font-bold text-stone-400 uppercase">Memo</label><textarea value={formData.memo || ''} onChange={e => setFormData({ ...formData, memo: e.target.value })} className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-2.5 outline-none dark:text-white" rows="3" /></div>
+                            <div><label className="text-xs font-bold text-stone-400 uppercase">Memo</label><textarea value={formData.memo || ''} onChange={e => setFormData({ ...formData, memo: e.target.value })} className="w-full bg-stone-900 border border-stone-200 border-stone-700 rounded-lg p-2.5 outline-none text-white" rows="3" /></div>
                             <div>
                                 <label className="text-xs font-bold text-stone-400 uppercase mb-2 block">Attachment</label>
 
                                 {/* Preview Area */}
                                 {formData.image_url ? (
-                                    <div className="relative w-full h-40 bg-stone-100 dark:bg-stone-900 rounded-xl overflow-hidden group border border-stone-200 dark:border-stone-700">
+                                    <div className="relative w-full h-40 bg-stone-900 rounded-xl overflow-hidden group border border-stone-200 border-stone-700">
                                         <img src={formData.image_url} alt="Preview" className="w-full h-full object-cover" />
                                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <button
@@ -336,7 +336,7 @@ export default function TimeEntriesPage() {
                                     </div>
                                 ) : (
                                     /* Upload Box */
-                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-stone-300 dark:border-stone-700 rounded-xl cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-900/50 hover:border-amber-500 transition-all group">
+                                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-stone-700 rounded-xl cursor-pointer hover:bg-stone-900/50 hover:border-amber-500 transition-all group">
                                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                             <UploadCloud className="w-8 h-8 mb-3 text-stone-400 group-hover:text-amber-500 transition-colors" />
                                             <p className="mb-1 text-sm text-stone-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>

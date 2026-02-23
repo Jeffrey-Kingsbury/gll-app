@@ -23,7 +23,7 @@ export default async function EstimatesPage({ searchParams }) {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
           <Calculator size={28} className="text-amber-600" />
-          <h1 className="text-2xl font-bold text-stone-900 dark:text-white">Estimates</h1>
+          <h1 className="text-2xl font-bold text-white">Estimates</h1>
         </div>
         <Link href="/estimates/new" className="flex items-center gap-2 bg-amber-700 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-medium shadow-md transition-all active:scale-95">
           <Plus size={18} /> New Estimate

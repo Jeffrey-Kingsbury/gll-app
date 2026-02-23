@@ -86,10 +86,29 @@ export async function getProjectByIdAction(id) {
             ORDER BY t.date DESC
         `, [id]);
 
+        // --- NEW: Fetch Expense Reports ---
+        const expenseReports = await mysql_query(`
+            SELECT 
+                er.internalid, er.name, er.status, er.created_at,
+                (SELECT SUM(estimated_labor_cost) FROM expense_report_lines WHERE expense_report_id = er.internalid) as total_budget
+            FROM expense_reports er
+            WHERE er.project_id = ?
+            ORDER BY er.created_at DESC
+        `, [id]);
+
+        const invoices = await mysql_query(`
+            SELECT internalid, invoice_number, issue_date, total_amount, status
+            FROM invoices
+            WHERE project_id = ?
+            ORDER BY created_at DESC
+        `, [id]);
+
         return {
             project: JSON.parse(JSON.stringify(project)),
             estimates: JSON.parse(JSON.stringify(estimates)),
-            timeEntries: JSON.parse(JSON.stringify(timeEntries))
+            timeEntries: JSON.parse(JSON.stringify(timeEntries)),
+            expenseReports: JSON.parse(JSON.stringify(expenseReports)),
+            invoices: JSON.parse(JSON.stringify(invoices))
         };
     } catch (error) {
         console.error("Get Project Error:", error);

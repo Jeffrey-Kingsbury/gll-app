@@ -60,7 +60,10 @@ export default function NewEstimatePage() {
                     getTemplatesAction()
                 ]);
 
-                setAvailableProjects(projects || []);
+                // FIXED: Handle both Array (old action) and Object.data (new paginated action)
+                const projectData = Array.isArray(projects) ? projects : projects?.data || [];
+                setAvailableProjects(projectData);
+
                 setAvailableTemplates(templates || []);
 
                 const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -184,8 +187,6 @@ export default function NewEstimatePage() {
 
     // --- CALCULATOR HANDLERS ---
     const handleOpenCalculator = (index) => {
-        // Reset to defaults or try to reverse engineer current value?
-        // Let's stick to defaults for now to be safe.
         setCalcValues({ count: 1, hours: 8, rate: 65 });
         setCalcModal({ isOpen: true, targetIndex: index });
     };
@@ -331,7 +332,6 @@ export default function NewEstimatePage() {
             {/* --- DRAFT BANNER --- */}
             {draftFound && (
                 <div className="bg-amber-900/20 border border-amber-500/30 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 shadow-lg backdrop-blur-sm">
-                    {/* ... (Draft banner content same as before) ... */}
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-amber-500/10 rounded-lg text-amber-500">
                             <History size={20} />
@@ -355,49 +355,56 @@ export default function NewEstimatePage() {
             {/* --- TOP BAR --- */}
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-stone-800 pb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-stone-900 dark:text-white font-serif flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-white font-serif flex items-center gap-3">
                         <Briefcase className="text-stone-400" size={32} />
                         New Estimate
                     </h1>
                 </div>
                 <div className="flex items-center gap-3">
                     <button onClick={() => router.back()} className="px-4 py-2 text-stone-500 hover:text-stone-300 transition-colors text-sm font-medium">Cancel</button>
-                    <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 bg-stone-900 dark:bg-amber-600 hover:bg-stone-800 dark:hover:bg-amber-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-black/10 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed">
+                    <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-2 bg-stone-900 bg-amber-600 hover:bg-stone-800 hover:bg-amber-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-xl shadow-black/10 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed">
                         {isSaving ? 'Saving...' : <><Save size={18} /> Save Estimate</>}
                     </button>
                 </div>
             </div>
 
             {/* --- CONFIGURATION CARD --- */}
-            <div className="bg-white dark:bg-[#1c1917] p-6 rounded-2xl border border-stone-200 dark:border-stone-800 shadow-sm space-y-8">
-                {/* ... (Project & Template Inputs same as before) ... */}
+            <div className="bg-[#1c1917] p-6 rounded-2xl border border-stone-800 shadow-sm space-y-8">
                 <div>
                     <div className="flex items-center justify-between mb-4">
                         <label className="flex items-center gap-2 text-xs font-bold text-stone-400 uppercase tracking-wider">Project Information</label>
-                        <div className="flex bg-stone-100 dark:bg-stone-900 p-1 rounded-lg">
-                            <button onClick={() => setProjectMode('new')} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${projectMode === 'new' ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}>New Project</button>
-                            <button onClick={() => setProjectMode('existing')} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${projectMode === 'existing' ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}>Existing</button>
+                        <div className="flex bg-stone-900 p-1 rounded-lg">
+                            <button onClick={() => setProjectMode('new')} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${projectMode === 'new' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}>New Project</button>
+                            <button onClick={() => setProjectMode('existing')} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${projectMode === 'existing' ? 'bg-stone-700 text-white shadow-sm' : 'text-stone-400 hover:text-stone-600'}`}>Existing</button>
                         </div>
                     </div>
                     <div className="w-full">
                         {projectMode === 'new' ? (
-                            <input className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-5 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500/50 outline-none font-medium placeholder:text-stone-400 transition-all" placeholder="Enter Project Name (e.g. Smith Kitchen Renovation)" value={meta.projectName} onChange={e => setMeta({ ...meta, projectName: e.target.value })} />
+                            <input className="w-full bg-stone-900 border border-stone-200 border-stone-700 rounded-xl px-5 py-3 text-white focus:ring-2 focus:ring-amber-500/50 outline-none font-medium placeholder:text-stone-400 transition-all" placeholder="Enter Project Name (e.g. Smith Kitchen Renovation)" value={meta.projectName} onChange={e => setMeta({ ...meta, projectName: e.target.value })} />
                         ) : (
                             <div className="relative">
-                                <select className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-5 py-3 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500/50 outline-none appearance-none" value={meta.selectedProjectId} onChange={e => setMeta({ ...meta, selectedProjectId: e.target.value })}>
+                                <select className="w-full bg-stone-900 border border-stone-200 border-stone-700 rounded-xl px-5 py-3 text-white focus:ring-2 focus:ring-amber-500/50 outline-none appearance-none" value={meta.selectedProjectId} onChange={e => setMeta({ ...meta, selectedProjectId: e.target.value })}>
                                     <option value="">-- Select Existing Project --</option>
-                                    {availableProjects.map(p => (<option key={p.internalid} value={p.internalid}>{p.name} {p.client_name ? `• ${p.client_name}` : ''}</option>))}
+                                    {availableProjects.map(p => {
+                                        // Handle both old and new column names
+                                        const clientName = p.company_name || p.client_name;
+                                        return (
+                                            <option key={p.internalid} value={p.internalid}>
+                                                {p.name} {clientName ? `• ${clientName}` : ''}
+                                            </option>
+                                        );
+                                    })}
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={16} />
                             </div>
                         )}
                     </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-stone-100 dark:border-stone-800">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-stone-800">
                     <div>
                         <label className="flex items-center gap-2 text-xs font-bold text-stone-400 uppercase tracking-wider mb-2"><LayoutTemplate size={14} /> Import Template</label>
                         <div className="relative">
-                            <select className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-4 py-2.5 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500/50 outline-none appearance-none text-sm" onChange={handleTemplateChange} value="">
+                            <select className="w-full bg-stone-900 border border-stone-200 border-stone-700 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-amber-500/50 outline-none appearance-none text-sm" onChange={handleTemplateChange} value="">
                                 <option value="" disabled>Select a template to load items...</option>
                                 {availableTemplates.map(t => (<option key={t.id} value={t.id}>{t.name}</option>))}
                             </select>
@@ -407,7 +414,7 @@ export default function NewEstimatePage() {
                     <div>
                         <label className="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Admin / Overhead Fee (%)</label>
                         <div className="relative">
-                            <input type="number" className="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl px-4 py-2.5 text-stone-900 dark:text-white focus:ring-2 focus:ring-amber-500/50 outline-none font-mono text-sm" value={meta.adminFee} onChange={e => setMeta({ ...meta, adminFee: parseFloat(e.target.value) })} />
+                            <input type="number" className="w-full bg-stone-900 border border-stone-200 border-stone-700 rounded-xl px-4 py-2.5 text-white focus:ring-2 focus:ring-amber-500/50 outline-none font-mono text-sm" value={meta.adminFee} onChange={e => setMeta({ ...meta, adminFee: parseFloat(e.target.value) })} />
                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 text-xs font-bold">%</span>
                         </div>
                     </div>
@@ -432,13 +439,13 @@ export default function NewEstimatePage() {
             </div>
 
             {/* --- ADD SECTION BUTTON --- */}
-            <button onClick={handleAddSection} className="w-full py-4 border-2 border-dashed border-stone-200 dark:border-stone-800 rounded-xl flex items-center justify-center gap-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:border-stone-400 dark:hover:border-stone-600 transition-all group">
+            <button onClick={handleAddSection} className="w-full py-4 border-2 border-dashed border-stone-800 rounded-xl flex items-center justify-center gap-2 text-stone-400 hover:text-stone-600 hover:text-stone-300 hover:border-stone-400 hover:border-stone-600 transition-all group">
                 <Plus size={20} className="group-hover:scale-110 transition-transform" /> <span className="font-bold">Add New Section</span>
             </button>
 
             {/* --- STICKY FOOTER SUMMARY --- */}
             <div className="fixed bottom-6 right-6 z-40 animate-in slide-in-from-right-4">
-                <div className="bg-stone-900/95 dark:bg-[#0c0a09]/95 text-stone-200 p-6 rounded-2xl shadow-2xl shadow-black/50 border border-stone-700 min-w-[320px] backdrop-blur-xl">
+                <div className="bg-stone-900/95 bg-[#0c0a09]/95 text-stone-200 p-6 rounded-2xl shadow-2xl shadow-black/50 border border-stone-700 min-w-[320px] backdrop-blur-xl">
                     <div className="grid grid-cols-2 gap-y-1 gap-x-8 text-sm mb-4">
                         <span className="text-stone-500">Labor</span><span className="font-mono text-right">${totals.laborTotal.toFixed(2)}</span>
                         <span className="text-stone-500">Material</span><span className="font-mono text-right">${totals.materialTotal.toFixed(2)}</span>
@@ -471,38 +478,36 @@ function CategoryTable({ category, items, onUpdate, onRemove, onAdd, onRenameSec
     };
 
     return (
-        <div className="bg-white dark:bg-[#1c1917] border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden shadow-sm transition-all hover:shadow-md">
-            {/* Category Header (Unchanged logic, just ensure Pencil/Trash icons are present as in previous step) */}
-            <div onClick={() => !isEditingName && setIsOpen(!isOpen)} className={`flex justify-between items-center p-5 cursor-pointer transition-colors ${isOpen ? 'bg-stone-50 dark:bg-stone-900/50 border-b border-stone-100 dark:border-stone-800' : 'bg-white dark:bg-[#1c1917] hover:bg-stone-50 dark:hover:bg-stone-900/30'}`}>
+        <div className="bg-[#1c1917] border border-stone-800 rounded-xl overflow-hidden shadow-sm transition-all hover:shadow-md">
+            <div onClick={() => !isEditingName && setIsOpen(!isOpen)} className={`flex justify-between items-center p-5 cursor-pointer transition-colors ${isOpen ? 'bg-stone-900/50 border-b border-stone-800' : 'bg-[#1c1917] hover:bg-stone-900/30'}`}>
                 <div className="flex items-center gap-3 flex-1">
                     <div className={`p-1 rounded-md transition-transform duration-200 ${isOpen ? 'rotate-0 text-amber-600' : '-rotate-90 text-stone-400'}`}>
                         <ChevronDown size={20} />
                     </div>
                     {isEditingName ? (
                         <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                            <input autoFocus className="bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-600 rounded px-2 py-1 text-lg font-bold text-stone-800 dark:text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50" value={tempName} onChange={e => setTempName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveName(e); if (e.key === 'Escape') setIsEditingName(false); }} />
+                            <input autoFocus className="bg-stone-800 border border-stone-600 rounded px-2 py-1 text-lg font-bold text-stone-200 outline-none focus:ring-2 focus:ring-amber-500/50" value={tempName} onChange={e => setTempName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') saveName(e); if (e.key === 'Escape') setIsEditingName(false); }} />
                             <button onClick={saveName} className="p-1 text-green-600 hover:bg-green-50 rounded"><Check size={18} /></button>
                             <button onClick={() => setIsEditingName(false)} className="p-1 text-red-500 hover:bg-red-50 rounded"><X size={18} /></button>
                         </div>
                     ) : (
                         <div className="flex items-center gap-3 group/header">
-                            <h3 className="text-lg font-bold text-stone-800 dark:text-stone-200">{category}</h3>
+                            <h3 className="text-lg font-bold text-stone-200">{category}</h3>
                             <div className="flex items-center gap-1 opacity-0 group-hover/header:opacity-100 transition-opacity">
-                                <button onClick={(e) => { e.stopPropagation(); setIsEditingName(true); }} className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded transition-colors" title="Rename Section"><Pencil size={14} /></button>
-                                <button onClick={(e) => { e.stopPropagation(); onDeleteSection(category); }} className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors" title="Delete Section"><Trash2 size={14} /></button>
+                                <button onClick={(e) => { e.stopPropagation(); setIsEditingName(true); }} className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 hover:bg-amber-900/20 rounded transition-colors" title="Rename Section"><Pencil size={14} /></button>
+                                <button onClick={(e) => { e.stopPropagation(); onDeleteSection(category); }} className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 hover:bg-red-900/20 rounded transition-colors" title="Delete Section"><Trash2 size={14} /></button>
                             </div>
-                            <span className="bg-stone-100 dark:bg-stone-800 text-stone-500 text-xs px-2.5 py-0.5 rounded-full font-bold ml-2">{items.length}</span>
+                            <span className="bg-stone-100 bg-stone-800 text-stone-500 text-xs px-2.5 py-0.5 rounded-full font-bold ml-2">{items.length}</span>
                         </div>
                     )}
                 </div>
-                <div className="text-right"><span className="font-mono font-bold text-stone-900 dark:text-white text-lg">${catTotal.toFixed(2)}</span></div>
+                <div className="text-right"><span className="font-mono font-bold text-white text-lg">${catTotal.toFixed(2)}</span></div>
             </div>
 
-            {/* Table Rows */}
             {isOpen && (
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-white dark:bg-[#1c1917] text-xs font-bold text-stone-400 uppercase tracking-wider border-b border-stone-100 dark:border-stone-800">
+                        <thead className="bg-[#1c1917] text-xs font-bold text-stone-400 uppercase tracking-wider border-b border-stone-800">
                             <tr>
                                 <th className="px-6 py-4 w-24">Code</th>
                                 <th className="px-6 py-4">Item Details</th>
@@ -512,28 +517,26 @@ function CategoryTable({ category, items, onUpdate, onRemove, onAdd, onRenameSec
                                 <th className="px-4 py-4 w-12"></th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-stone-100 dark:divide-stone-800/50">
+                        <tbody className="divide-y divide-stone-100 divide-stone-800/50">
                             {items.map((item) => (
-                                <tr key={item.originalIndex} className="group hover:bg-stone-50/80 dark:hover:bg-stone-900/30 transition-colors">
+                                <tr key={item.originalIndex} className="group hover:bg-stone-50/80 hover:bg-stone-900/30 transition-colors">
                                     <td className="px-6 py-4 align-top pt-5">
                                         <EditableInput value={item.code} onChange={val => onUpdate(item.originalIndex, 'code', val)} fontClass="font-mono text-xs text-stone-500" />
                                     </td>
                                     <td className="px-6 py-4 align-top">
-                                        <EditableInput value={item.subcategory} onChange={val => onUpdate(item.originalIndex, 'subcategory', val)} fontClass="font-bold text-base text-stone-800 dark:text-stone-200 mb-1" placeholder="Item Name" />
+                                        <EditableInput value={item.subcategory} onChange={val => onUpdate(item.originalIndex, 'subcategory', val)} fontClass="font-bold text-base text-stone-200 mb-1" placeholder="Item Name" />
                                         <EditableInput value={item.details} onChange={val => onUpdate(item.originalIndex, 'details', val)} fontClass="text-sm text-stone-500 leading-snug" multiline placeholder="Add description..." />
                                     </td>
 
-                                    {/* Labor Input with Calculator Icon */}
                                     <td className="px-4 py-4 align-top">
                                         <div className="flex items-start gap-1">
-                                            <div className="relative group/input flex-1 bg-stone-50 dark:bg-stone-900 rounded-lg border border-transparent focus-within:border-amber-500/50 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all">
+                                            <div className="relative group/input flex-1 bg-stone-900 rounded-lg border border-transparent focus-within:border-amber-500/50 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all">
                                                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within/input:text-amber-600 transition-colors pointer-events-none"><User size={14} /></div>
-                                                <input type="number" step="0.01" className="w-full bg-transparent rounded-lg pl-8 pr-3 py-2 text-right font-mono text-stone-900 dark:text-stone-200 outline-none" value={item.labor === 0 ? '' : item.labor} placeholder="0.00" onChange={(e) => onUpdate(item.originalIndex, 'labor', e.target.value)} />
+                                                <input type="number" step="0.01" className="w-full bg-transparent rounded-lg pl-8 pr-3 py-2 text-right font-mono text-stone-200 outline-none" value={item.labor === 0 ? '' : item.labor} placeholder="0.00" onChange={(e) => onUpdate(item.originalIndex, 'labor', e.target.value)} />
                                             </div>
-                                            {/* CALCULATOR BUTTON */}
                                             <button
                                                 onClick={() => onOpenCalculator(item.originalIndex)}
-                                                className="p-2.5 bg-stone-100 dark:bg-stone-800 text-stone-400 hover:text-amber-500 rounded-lg transition-colors border border-transparent hover:border-amber-500/30"
+                                                className="p-2.5 bg-stone-100 bg-stone-800 text-stone-400 hover:text-amber-500 rounded-lg transition-colors border border-transparent hover:border-amber-500/30"
                                                 title="Calculate Labor"
                                             >
                                                 <Calculator size={14} />
@@ -542,24 +545,24 @@ function CategoryTable({ category, items, onUpdate, onRemove, onAdd, onRenameSec
                                     </td>
 
                                     <td className="px-4 py-4 align-top">
-                                        <div className="relative group/input bg-stone-50 dark:bg-stone-900 rounded-lg border border-transparent focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                                        <div className="relative group/input bg-stone-900 rounded-lg border border-transparent focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
                                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within/input:text-blue-500 transition-colors pointer-events-none"><DollarSign size={14} /></div>
-                                            <input type="number" step="0.01" className="w-full bg-transparent rounded-lg pl-8 pr-3 py-2 text-right font-mono text-stone-900 dark:text-stone-200 outline-none" value={item.material === 0 ? '' : item.material} placeholder="0.00" onChange={(e) => onUpdate(item.originalIndex, 'material', e.target.value)} />
+                                            <input type="number" step="0.01" className="w-full bg-transparent rounded-lg pl-8 pr-3 py-2 text-right font-mono text-stone-200 outline-none" value={item.material === 0 ? '' : item.material} placeholder="0.00" onChange={(e) => onUpdate(item.originalIndex, 'material', e.target.value)} />
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right align-top pt-5">
-                                        <span className="font-mono font-medium text-stone-700 dark:text-stone-300">${((item.labor || 0) + (item.material || 0)).toFixed(2)}</span>
+                                        <span className="font-mono font-medium text-stone-300">${((item.labor || 0) + (item.material || 0)).toFixed(2)}</span>
                                     </td>
                                     <td className="px-4 py-4 text-center align-top pt-4">
-                                        <button onClick={() => onRemove(item.originalIndex)} className="p-2 text-stone-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100" title="Remove Item"><X size={16} /></button>
+                                        <button onClick={() => onRemove(item.originalIndex)} className="p-2 text-stone-300 hover:text-red-500 hover:bg-red-50 hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100" title="Remove Item"><X size={16} /></button>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                    <div className="py-3 bg-stone-50 dark:bg-[#141210] border-t border-stone-200 dark:border-stone-800 text-center">
+                    <div className="py-3 bg-stone-50 bg-[#141210] border-t border-stone-800 text-center">
                         <button onClick={() => onAdd(category)} className="text-xs font-bold text-stone-400 hover:text-amber-600 flex items-center justify-center gap-2 mx-auto py-1 transition-colors uppercase tracking-wide group">
-                            <span className="bg-stone-200 dark:bg-stone-800 group-hover:bg-amber-100 text-stone-500 group-hover:text-amber-600 rounded-full p-0.5 transition-colors"><Plus size={12} /></span> Add Item to {category}
+                            <span className="bg-stone-800 group-hover:bg-amber-100 text-stone-500 group-hover:text-amber-600 rounded-full p-0.5 transition-colors"><Plus size={12} /></span> Add Item to {category}
                         </button>
                     </div>
                 </div>

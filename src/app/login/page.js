@@ -316,7 +316,7 @@ export default function LoginPage() {
       </div>
 
       {/* RIGHT SIDE (Login Form) */}
-      <div className="w-full lg:w-1/2 flex flex-col relative bg-transparent lg:bg-[#fdfaf6] dark:lg:bg-stone-950 transition-colors z-10">
+      <div className="w-full lg:w-1/2 flex flex-col relative bg-transparent lg:bg-stone-950 transition-colors z-10">
 
         {/* Language Toggle */}
         <div className="absolute top-6 right-6 z-30">

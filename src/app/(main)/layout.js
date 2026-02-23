@@ -67,6 +67,7 @@ export default function MainLayout({ children }) {
       { name: "Customers", href: "/customers/", icon: Users },
       { name: "Documents", href: "/documents/", icon: Folder },
       { name: "Estimates", href: "/estimates/", icon: Calculator },
+      { name: "Invoices", href: "/invoices/", icon: FileText },
       { name: "Projects", href: "/projects/", icon: Clipboard },
       { name: "Time Entries", href: "/time-entries/", icon: Clock },
     )
@@ -93,7 +94,7 @@ export default function MainLayout({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#fdfaf6] dark:bg-stone-950 transition-colors duration-300">
+    <div className="min-h-screen bg-stone-950 transition-colors duration-300">
       {/* --- MOBILE HEADER --- */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-stone-900 border-b border-stone-800 z-50 flex items-center px-4 text-stone-100 shadow-md">
         <button onClick={() => setIsMobileOpen(true)} className="p-2 hover:bg-stone-800 rounded-lg text-stone-400 hover:text-white transition-colors z-10 relative">
